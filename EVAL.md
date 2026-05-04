@@ -5,8 +5,8 @@ This document catalogs all test cases in the sele codebase, organized by module.
 ## Test Summary
 
 - **Total Tests**: 68
-- **Passing**: 64
-- **Skipped**: 4 (bubblewrap integration tests on non-Linux)
+- **Passing**: 68
+- **Skipped**: 0
 - **Coverage**: All major modules tested
 
 ## Test Modules
@@ -33,10 +33,10 @@ Integration tests that actually invoke `bwrap`. Skipped automatically when bubbl
 
 | Test Case | Functionality Tested | Module | Result |
 |-----------|---------------------|--------|--------|
-| `test_run_shell_executes_inside_sandbox` | Verifies shell commands execute inside bubblewrap sandbox | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ⏭️ Skip (no bwrap) |
-| `test_egress_none_blocks_dns` | Confirms DNS resolution is blocked when egress mode is `none` | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ⏭️ Skip (no bwrap) |
-| `test_writes_to_cwd_are_visible_on_host` | Ensures writes to sandbox cwd are visible on host | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ⏭️ Skip (no bwrap) |
-| `test_caps_are_dropped` | Verifies capabilities are dropped (mount should fail) | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ⏭️ Skip (no bwrap) |
+| `test_run_shell_executes_inside_sandbox` | Verifies shell commands execute inside bubblewrap sandbox | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ✅ Pass |
+| `test_egress_none_blocks_dns` | Confirms DNS resolution is blocked when egress mode is `none` | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ✅ Pass |
+| `test_writes_to_cwd_are_visible_on_host` | Ensures writes to sandbox cwd are visible on host | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ✅ Pass |
+| `test_caps_are_dropped` | Verifies capabilities are dropped (mount should fail) | `sele.sandbox.bubblewrap.BubblewrapSandbox` | ✅ Pass |
 
 ### test_chat_compat.py
 
@@ -186,7 +186,7 @@ pytest tests/test_tools.py::test_python_exec_simple_code
 - Tracer implementations (tested via end-to-end)
 
 ### Skipped Tests
-- 4 bubblewrap integration tests skipped on non-Linux systems (bwrap not available)
+- None (all 68 tests pass on Linux with bubblewrap installed)
 
 ## Test Data Fixtures
 
@@ -205,6 +205,6 @@ Most tests use `tmp_path` fixture from pytest for temporary directories. Some te
 ## Continuous Integration
 
 Tests run on every commit. Expected to pass on:
-- Linux (all tests, including bubblewrap integration)
-- macOS (all tests except bubblewrap integration)
-- Windows (all tests except bubblewrap integration)
+- Linux (all 68 tests, including bubblewrap integration when bwrap is installed)
+- macOS (64 tests, bubblewrap integration skipped if bwrap not available)
+- Windows (64 tests, bubblewrap integration not applicable)
