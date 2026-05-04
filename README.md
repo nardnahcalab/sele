@@ -72,7 +72,7 @@ Builder ──► LoopContext { ModelAdapter · ToolProtocol · AgentLoop ·
 | ToolProtocol    | `native_tools`/`react_text` | `json_grammar`, `xml_tags`                |
 | AgentLoop       | `tool_loop`/`plan_execute` | `reflexion`, `tree_search`                 |
 | Memory          | `full_history`            | `sliding_window`, `summarize`, `retrieval`  |
-| Sandbox         | `host_direct`             | `docker`, `firejail`                        |
+| Sandbox         | `host_direct`, `bubblewrap` | `docker`, `firejail`, `gvisor`            |
 | Approval        | `confirm_destructive`     | `allowlist`, `policy_lm`                    |
 | Tools           | `shell`, `fs_read`, `fs_write` | `http`, `python_exec`, `git`           |
 | Tracer          | `jsonl`, `console`, `null` | `otel`                                     |
@@ -130,12 +130,66 @@ The same pattern works for `sele.adapters`, `sele.protocols`, `sele.loops`, `sel
 
 ## Safety
 
-The default sandbox runs commands directly on your host. The default
-approval policy (`confirm_destructive`) prompts before `shell` and
-`fs_write` calls when sele is attached to a terminal, and denies them in
-non-interactive sessions. Use `sele run -p ... --cwd /tmp/work` to
-confine filesystem operations to a scratch directory, and inspect traces
-under `.sele/runs/` to see exactly what was attempted.
+The default sandbox (`host_direct`) runs commands directly on your host
+with only a working-directory boundary. The default approval policy
+(`confirm_destructive`) prompts before `shell` and `fs_write` calls when
+sele is attached to a terminal, and denies them in non-interactive
+sessions. Use `sele run -p ... --cwd /tmp/work` to confine filesystem
+operations to a scratch directory, and inspect traces under
+`.sele/runs/` to see exactly what was attempted.
+
+For real isolation on Linux, use the `bubblewrap` sandbox (next section).
+
+## Sandboxing with `bubblewrap`
+
+`bubblewrap` (the same tool Flatpak uses) is dramatically lighter than
+Docker — milliseconds to start, no daemon, single static binary,
+unprivileged. Each `shell` call runs in fresh PID/IPC/UTS/mount namespaces
+with all capabilities dropped, the host `/usr`, `/etc`, etc. bind-mounted
+read-only, and a tmpfs `/tmp`. The sandbox cwd is bind-mounted read-write
+so progress persists across calls.
+
+Linux only. Install on the host:
+
+```bash
+sudo apt install bubblewrap     # Debian / Ubuntu
+sudo dnf install bubblewrap     # Fedora / RHEL
+sudo pacman -S bubblewrap       # Arch
+sudo apk add bubblewrap         # Alpine
+```
+
+Then use the bundled profile:
+
+```bash
+sele run "look at this directory and write a one-line summary to NOTES.md" \
+  -p bubblewrap-local
+```
+
+### Network egress modes
+
+`bubblewrap-local` defaults to `egress.mode: none`, which fully blocks
+network from inside the sandbox via `--unshare-net`. To allow specific
+hosts:
+
+```yaml
+sandbox:
+  kind: bubblewrap
+  egress:
+    mode: hosts
+    hosts: [github.com, "*.github.com", pypi.org, "*.pypi.org"]
+```
+
+`hosts` mode runs an in-process HTTP CONNECT proxy on `127.0.0.1` and
+sets `http_proxy` / `https_proxy` env vars in the sandbox. Well-behaved
+tools (curl, git, pip, requests) will route through it. **This is
+best-effort only**: tools that ignore proxy env vars or use raw sockets
+can bypass it. For hard guarantees use `mode: none`.
+
+| Mode | Network | Bypassable? |
+|---|---|---|
+| `none` | `--unshare-net` — fully blocked | No |
+| `all` | shares host network namespace | n/a (no policy) |
+| `hosts` | shares network + CONNECT proxy with hostname allowlist | Yes (proxy env, raw sockets) |
 
 ## Running fully offline with `llama_cpp_native`
 
@@ -169,8 +223,8 @@ will be rendered into the system prompt.
 
 ## Roadmap
 
-- v0.2 — `transformers_native` adapter; `docker` sandbox; `summarize` and `retrieval` memory; `python_exec` and `http` tools.
-- v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory.
+- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `summarize` and `retrieval` memory; `python_exec` and `http` tools.
+- v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License
 

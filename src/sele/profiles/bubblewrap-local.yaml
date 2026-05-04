@@ -1,0 +1,50 @@
+name: bubblewrap-local
+description: |
+  Local Ollama + bubblewrap sandbox. Each shell tool call runs inside a
+  fresh PID/IPC/UTS/mount namespace with caps dropped, the host /usr,
+  /etc, /bin, /sbin etc. bind-mounted read-only, and the working
+  directory bind-mounted read-write.
+
+  Network is fully blocked by default (egress.mode: none). Switch to
+  ``all`` for unrestricted access, or to ``hosts`` with an allowlist for
+  best-effort hostname filtering via an in-process CONNECT proxy.
+
+  Linux only. Requires the host package:
+    Debian/Ubuntu:  sudo apt install bubblewrap
+    Fedora/RHEL:    sudo dnf install bubblewrap
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: bubblewrap
+  cwd: .
+  hostname: sele-sandbox
+  # Override defaults if needed:
+  # ro_binds: [/usr, /etc, /opt, /lib, /lib64, /bin, /sbin]
+  # tmpfs:    [/tmp, /var/tmp, /run, /home, /root]
+  # rw_binds: []
+  egress:
+    mode: none           # none | all | hosts
+    hosts: []            # used when mode == hosts; e.g. [github.com, "*.pypi.org"]
+  timeout: 60.0
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs

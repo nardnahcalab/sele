@@ -76,6 +76,25 @@ class LoopConfig(_Lax):
     max_steps: int = 25
 
 
+class EgressConfig(_Lax):
+    """Network egress policy for sandboxes that support it.
+
+    - ``none``: Block all outbound network. For Bubblewrap this means
+      ``--unshare-net``; cannot be bypassed.
+    - ``all``: Share the host network namespace. Same network access as
+      ``host_direct``.
+    - ``hosts``: Share the host network but route the sandbox through a
+      lightweight HTTP CONNECT proxy that allowlists hostnames (including
+      ``*.suffix`` wildcards). Best-effort only: tools that ignore
+      ``http_proxy`` / ``https_proxy`` env vars or use raw sockets can
+      bypass this. Use ``none`` for hard guarantees.
+    """
+
+    mode: str = "all"  # one of: none, all, hosts
+    hosts: list[str] = Field(default_factory=list)
+    proxy_port: int = 0  # 0 = auto-bind
+
+
 class SandboxConfig(_Lax):
     kind: str = "host_direct"
     cwd: str = "."
@@ -83,6 +102,13 @@ class SandboxConfig(_Lax):
         default_factory=lambda: ["PATH", "HOME", "LANG", "LC_ALL", "USER", "SHELL", "TERM"]
     )
     timeout: float = 60.0
+
+    # Bubblewrap-specific (ignored by host_direct)
+    hostname: str = "sele-sandbox"
+    ro_binds: list[str] | None = None  # None -> use sandbox's defaults
+    rw_binds: list[str] = Field(default_factory=list)
+    tmpfs: list[str] | None = None  # None -> use sandbox's defaults
+    egress: EgressConfig = Field(default_factory=EgressConfig)
 
 
 class TracerConfig(_Lax):

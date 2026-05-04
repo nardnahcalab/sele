@@ -64,6 +64,7 @@ full_history = "sele.memory.full_history:FullHistoryMemory"
 
 [project.entry-points."sele.sandbox"]
 host_direct = "sele.sandbox.host_direct:HostDirectSandbox"
+bubblewrap = "sele.sandbox.bubblewrap:BubblewrapSandbox"
 
 [project.entry-points."sele.approval"]
 auto = "sele.approval.policies:AutoApproval"
