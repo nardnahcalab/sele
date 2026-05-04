@@ -6,7 +6,16 @@
 
 ## Status
 
-`v0.2` — adds `llama_cpp_native` adapter for offline GGUF models, `bubblewrap` sandbox for Linux isolation with egress control, `summarize` memory for long-running tasks, `python_exec`/`http` tools, and `sele eval` for benchmarking. Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
+**v0.2** — Complete. Adds:
+- `llama_cpp_native` adapter for offline GGUF models
+- `bubblewrap` sandbox for Linux isolation with egress control
+- `summarize` memory for long-running tasks
+- `python_exec` and `http` tools
+- `sele eval` for benchmarking
+
+Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design and [EVAL.md](./EVAL.md) for test coverage.
 
 ## Install
 
@@ -79,33 +88,17 @@ This is useful for:
 - Testing changes to the harness (tools, protocols, loops)
 - Measuring performance on custom task sets
 
-## Architecture
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system architecture and pluggable surfaces.
 
-`sele` is a thin coordinator over a set of pluggable surfaces. A YAML
-profile wires them together; the builder instantiates concrete classes
-from the registry; the loop drives them.
+## Architecture Overview
 
-```
-Profile (YAML)
-   │
-   ▼
-Builder ──► LoopContext { ModelAdapter · ToolProtocol · AgentLoop ·
-                          Memory · Sandbox · Approval · Tools · Tracer }
-                   │
-                   ▼
-              Agent loop drives turns
-```
+`sele` is a thin coordinator over a set of pluggable surfaces. A YAML profile wires them together; the builder instantiates concrete classes from the registry; the loop drives them.
 
-| Surface         | Default impl              | Other planned impls                         |
-| --------------- | ------------------------- | ------------------------------------------- |
-| ModelAdapter    | `openai_compat`, `llama_cpp_native` | `transformers_native`            |
-| ToolProtocol    | `native_tools`/`react_text` | `json_grammar`, `xml_tags`                |
-| AgentLoop       | `tool_loop`/`plan_execute` | `reflexion`, `tree_search`                 |
-| Memory          | `full_history`, `summarize` | `sliding_window`, `retrieval`             |
-| Sandbox         | `host_direct`, `bubblewrap` | `docker`, `firejail`, `gvisor`            |
-| Approval        | `confirm_destructive`     | `allowlist`, `policy_lm`                    |
-| Tools           | `shell`, `fs_read`, `fs_write`, `python_exec`, `http` | `git`           |
-| Tracer          | `jsonl`, `console`, `null` | `otel`                                     |
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for:
+- Detailed architecture diagram
+- Complete list of pluggable surfaces and implementations
+- Data flow between components
+- Plugin development guide
 
 ## Writing a profile
 
