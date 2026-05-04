@@ -1,0 +1,52 @@
+# Secure configuration with bubblewrap sandbox
+# Save this as ~/.config/sele/profiles/secure.yaml
+# Requires bubblewrap: sudo apt install bubblewrap (Debian/Ubuntu)
+
+name: secure
+description: Secure profile with bubblewrap isolation and egress control
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: bubblewrap
+  cwd: .
+  hostname: sele-sandbox
+  timeout: 60.0
+  egress:
+    mode: hosts  # Allow only specific hosts
+    hosts:
+      - github.com
+      - "*.github.com"
+      - pypi.org
+      - "*.pypi.org"
+  # Optional: customize bind mounts
+  # ro_binds: [/usr, /etc, /opt, /lib, /lib64, /bin, /sbin]
+  # rw_binds: []
+  # tmpfs: [/tmp, /var/tmp, /run, /home, /root]
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write, python_exec]
+# Note: http tool not included by default in secure profile
+# Add it if you enable egress mode: all or hosts
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
+
+system_prompt: |
+  You are a secure agent. All operations run in an isolated sandbox.
+  Network access is restricted to allowlisted hosts only.

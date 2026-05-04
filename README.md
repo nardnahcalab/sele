@@ -15,7 +15,7 @@
 
 Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design and [EVAL.md](./EVAL.md) for test coverage.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design, [EVAL.md](./EVAL.md) for test coverage, and [examples/](./examples/) for usage examples.
 
 ## Install
 

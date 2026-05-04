@@ -1,0 +1,40 @@
+# Profile with custom tool selection and approval policy
+# Save this as ~/.config/sele/profiles/custom-tools.yaml
+
+name: custom-tools
+description: Profile with specific tools and approval policy
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: host_direct
+  cwd: .
+
+approval: confirm_all  # Confirm ALL tool calls (safer but more verbose)
+
+tools:
+  - shell
+  - fs_read
+  - fs_write
+  - python_exec
+  # Note: http tool not included - no network access
+
+tracer:
+  kind: console  # Print traces to console instead of file
+
+system_prompt: |
+  You are a careful agent. Every tool call will require confirmation.
+  Think carefully before requesting operations.

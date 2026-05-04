@@ -1,0 +1,59 @@
+# Production-ready configuration
+# Save this as ~/.config/sele/profiles/production.yaml
+
+name: production
+description: Production configuration with timeouts and resource limits
+
+model:
+  adapter: openai_compat
+  base_url: http://your-inference-server:8000/v1
+  model: your-production-model
+  api_key: your-api-key
+  api_key_env: PRODUCTION_API_KEY  # Read from environment
+  temperature: 0.0  # Deterministic for production
+  max_tokens: 1024
+  timeout: 60.0
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 20  # Limit steps for predictability
+  # Optional: add step timeout
+  # step_timeout: 30.0
+
+memory: full_history
+  # For production with long tasks, consider:
+  # memory:
+  #   kind: summarize
+  #   trigger_chars: 16000
+  #   recent_chars: 8000
+
+sandbox:
+  kind: host_direct
+  cwd: /var/sele/work  # Fixed working directory
+  timeout: 30.0  # Shorter timeout for operations
+  env_allowlist:
+    - PATH
+    - HOME
+    - LANG
+    - PRODUCTION_API_KEY
+    - DATABASE_URL
+    # Add only necessary environment variables
+
+approval: auto  # No interactive prompts in production
+
+tools:
+  - shell
+  - fs_read
+  - fs_write
+  - python_exec
+  # http only if needed and egress is controlled
+
+tracer:
+  kind: jsonl
+  dir: /var/log/sele/runs  # Centralized log directory
+
+system_prompt: |
+  You are a production agent. Work efficiently and predictably.
+  All operations are logged for auditing.

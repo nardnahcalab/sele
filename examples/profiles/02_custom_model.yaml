@@ -1,0 +1,40 @@
+# Custom model configuration
+# Save this as ~/.config/sele/profiles/custom-model.yaml
+
+name: custom-model
+description: Profile with custom model parameters
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:8000/v1  # vLLM or other server
+  model: Qwen/Qwen2.5-7B-Instruct
+  api_key: EMPTY
+  temperature: 0.1  # Lower temperature for more deterministic output
+  max_tokens: 2048  # Limit response length
+  top_p: 0.9  # Nucleus sampling
+  timeout: 120.0  # Model timeout
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 30
+
+memory: full_history
+
+sandbox:
+  kind: host_direct
+  cwd: .
+  timeout: 60.0  # Shell command timeout
+
+approval: auto  # Auto-approve all tool calls (use with caution!)
+
+tools: [shell, fs_read, fs_write, python_exec, http]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
+
+system_prompt: |
+  You are an expert software engineer. Think step-by-step and explain your reasoning.
+  Use tools to gather information before making changes.

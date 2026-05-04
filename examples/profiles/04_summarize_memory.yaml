@@ -1,0 +1,45 @@
+# Profile with summarize memory for long-running tasks
+# Save this as ~/.config/sele/profiles/long-running.yaml
+
+name: long-running
+description: Profile with summarize memory for tasks that exceed context window
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 50  # Allow more steps for long tasks
+
+memory:
+  kind: summarize
+  trigger_chars: 24000  # Compact when total exceeds ~6000 tokens
+  recent_chars: 12000  # Keep ~3000 tokens verbatim after compaction
+  summary_role: system  # or "assistant" if model dislikes multiple system msgs
+  # prompt: |  # Optional custom summarizer prompt
+  #   Summarize the conversation so far in under {budget} characters.
+  #   Focus on key decisions, file names, and discovered facts.
+
+sandbox:
+  kind: host_direct
+  cwd: .
+  timeout: 120.0
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write, python_exec, http]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
+
+system_prompt: |
+  You are an agent designed for long-running tasks.
+  The conversation will be summarized when it gets too long.
+  Focus on maintaining context across many steps.

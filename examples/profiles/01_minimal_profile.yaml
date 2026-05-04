@@ -1,0 +1,35 @@
+# Minimal profile - only essential settings
+# Save this as ~/.config/sele/profiles/minimal.yaml
+
+name: minimal
+description: Minimal profile with default settings
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: host_direct
+  cwd: .
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
+
+system_prompt: |
+  You are a helpful assistant. Use tools when needed, otherwise answer directly.
