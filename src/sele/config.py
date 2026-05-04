@@ -129,6 +129,16 @@ class TracerConfig(_Lax):
     dir: str = ".sele/runs"
 
 
+class EvalConfig(_Lax):
+    """Configuration for evaluation runs."""
+
+    benchmark: str  # Path to benchmark file (JSONL)
+    output_dir: str = ".sele/eval"  # Where to write results
+    max_tasks: int | None = None  # Limit number of tasks to run
+    timeout: float = 300.0  # Per-task timeout in seconds
+    continue_on_error: bool = False  # Keep running after task failures
+
+
 class Profile(BaseModel):
     model_config = ConfigDict(extra="allow")
 

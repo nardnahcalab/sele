@@ -6,7 +6,7 @@
 
 ## Status
 
-`v0.2` — adds `llama_cpp_native` adapter for offline GGUF models, `bubblewrap` sandbox for Linux isolation with egress control, `summarize` memory for long-running tasks, and `python_exec`/`http` tools. Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
+`v0.2` — adds `llama_cpp_native` adapter for offline GGUF models, `bubblewrap` sandbox for Linux isolation with egress control, `summarize` memory for long-running tasks, `python_exec`/`http` tools, and `sele eval` for benchmarking. Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
 
 ## Install
 
@@ -48,6 +48,36 @@ sele profiles list
 sele profiles show local-ollama
 sele trace show .sele/runs/<run-id>.jsonl
 ```
+
+## Evaluation
+
+Run the agent on a benchmark and collect results:
+
+```bash
+sele eval benchmark.jsonl --profile local-ollama
+```
+
+The benchmark file is JSONL with one task per line:
+
+```jsonl
+{"id": "task1", "task": "list the files in this directory"}
+{"id": "task2", "task": "read the README and summarize it"}
+{"id": "task3", "task": "create a file called NOTES.md with a one-line summary"}
+```
+
+Options:
+
+- `--max-tasks N` — Limit to N tasks (useful for testing)
+- `--timeout SECONDS` — Per-task timeout (default 300s)
+- `--continue-on-error` — Keep running after task failures
+- `--output-dir DIR` — Directory for results (default `.sele/eval`)
+
+Results are written to `<output_dir>/<profile>_results.jsonl` with per-task metrics (success, duration, steps, error). A summary is printed to stdout.
+
+This is useful for:
+- Comparing different model adapters on the same tasks
+- Testing changes to the harness (tools, protocols, loops)
+- Measuring performance on custom task sets
 
 ## Architecture
 
@@ -280,7 +310,7 @@ will be rendered into the system prompt.
 ## Roadmap
 
 - v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory.
-- v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
+- v0.3 — `reflexion` loop; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License
 

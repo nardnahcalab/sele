@@ -13,11 +13,13 @@ from rich.table import Table
 from sele import __version__
 from sele.builder import build_loop
 from sele.config import (
+    EvalConfig,
     SandboxConfig,
     list_bundled_profiles,
     load_profile,
     resolve_profile_path,
 )
+from sele.eval import EvalRunner
 
 app = typer.Typer(
     add_completion=False,
@@ -122,6 +124,32 @@ def chat(
             err_console.print(f"[red]error:[/red] {exc}")
             continue
         console.print(Panel(result or "(no output)", title="sele", border_style="green"))
+
+
+@app.command("eval")
+def eval_cmd(
+    benchmark: str = typer.Argument(..., help="Path to benchmark file (JSONL)."),
+    profile: str = typer.Option("local-ollama", "--profile", "-p", help="Profile name or path."),
+    max_tasks: int | None = typer.Option(None, "--max-tasks", help="Limit number of tasks to run."),
+    timeout: float = typer.Option(300.0, "--timeout", help="Per-task timeout in seconds."),
+    continue_on_error: bool = typer.Option(
+        False, "--continue-on-error", help="Keep running after task failures."
+    ),
+    output_dir: str = typer.Option(".sele/eval", "--output-dir", help="Directory for results."),
+) -> None:
+    """Run the agent on a benchmark and collect results."""
+
+    config = EvalConfig(
+        benchmark=benchmark,
+        output_dir=output_dir,
+        max_tasks=max_tasks,
+        timeout=timeout,
+        continue_on_error=continue_on_error,
+    )
+
+    runner = EvalRunner(profile, config)
+    results = runner.run()
+    runner.print_summary(results)
 
 
 # ------------------------------------------------------------------ profiles
