@@ -15,6 +15,8 @@ git clone https://github.com/nardnahcalab/sele
 cd sele
 uv venv
 uv pip install -e ".[dev]"
+# Optional: in-process llama.cpp backend (compiles native code)
+uv pip install -e ".[llama_cpp]"
 ```
 
 ## Quickstart
@@ -66,7 +68,7 @@ Builder ──► LoopContext { ModelAdapter · ToolProtocol · AgentLoop ·
 
 | Surface         | Default impl              | Other planned impls                         |
 | --------------- | ------------------------- | ------------------------------------------- |
-| ModelAdapter    | `openai_compat`           | `llama_cpp_native`, `transformers_native`   |
+| ModelAdapter    | `openai_compat`, `llama_cpp_native` | `transformers_native`            |
 | ToolProtocol    | `native_tools`/`react_text` | `json_grammar`, `xml_tags`                |
 | AgentLoop       | `tool_loop`/`plan_execute` | `reflexion`, `tree_search`                 |
 | Memory          | `full_history`            | `sliding_window`, `summarize`, `retrieval`  |
@@ -135,9 +137,39 @@ non-interactive sessions. Use `sele run -p ... --cwd /tmp/work` to
 confine filesystem operations to a scratch directory, and inspect traces
 under `.sele/runs/` to see exactly what was attempted.
 
+## Running fully offline with `llama_cpp_native`
+
+`llama_cpp_native` runs a GGUF model directly in the `sele` process — no
+server, no network, no Ollama. It's slower to start (loads weights into
+memory) but more controllable and has no inter-process IPC.
+
+```bash
+pip install "sele[llama_cpp]"
+# Build with hardware acceleration if you have it:
+#   CMAKE_ARGS="-DGGML_CUDA=on" pip install --upgrade --force-reinstall llama-cpp-python
+#   CMAKE_ARGS="-DGGML_METAL=on" pip install --upgrade --force-reinstall llama-cpp-python
+```
+
+Copy the bundled `local-llamacpp` profile to `./.sele/profiles/` (or
+`~/.config/sele/profiles/`), edit `model.model_path` to point at your
+`.gguf`, then:
+
+```bash
+sele run "summarize this directory" -p local-llamacpp
+```
+
+The first call loads the model; subsequent loop iterations within the
+same process reuse the cached `Llama` instance, so `sele chat` is
+viable without paying load cost per turn.
+
+Tool calling works with chat formats that support it — `llama-3`,
+`qwen`, `functionary-v2`, `chatml-function-calling`. For models without
+tool support, switch the profile's `protocol` to `react_text` and tools
+will be rendered into the system prompt.
+
 ## Roadmap
 
-- v0.2 — `llama_cpp_native` and `transformers_native` adapters; `docker` sandbox; `summarize` and `retrieval` memory; `python_exec` and `http` tools.
+- v0.2 — `transformers_native` adapter; `docker` sandbox; `summarize` and `retrieval` memory; `python_exec` and `http` tools.
 - v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory.
 
 ## License

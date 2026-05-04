@@ -35,6 +35,9 @@ dev = [
     "mypy>=1.10",
     "types-PyYAML",
 ]
+llama_cpp = [
+    "llama-cpp-python>=0.2.90",
+]
 
 [project.scripts]
 sele = "sele.cli:app"
@@ -46,6 +49,7 @@ fs_write = "sele.tools.fs:fs_write"
 
 [project.entry-points."sele.adapters"]
 openai_compat = "sele.models.openai_compat:OpenAICompatAdapter"
+llama_cpp_native = "sele.models.llama_cpp_native:LlamaCppNativeAdapter"
 
 [project.entry-points."sele.protocols"]
 native_tools = "sele.protocols.native_tools:NativeToolsProtocol"

@@ -42,14 +42,33 @@ class _Lax(BaseModel):
 
 class ModelConfig(_Lax):
     adapter: str = "openai_compat"
-    base_url: str | None = None
+    # Common params (used by all adapters where applicable)
     model: str = ""
-    api_key: str | None = None
-    api_key_env: str | None = None
     temperature: float | None = None
     max_tokens: int | None = None
     timeout: float = 120.0
+
+    # OpenAI-compatible HTTP transport
+    base_url: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
     extra_headers: dict[str, str] = Field(default_factory=dict)
+
+    # In-process native backends (e.g. llama_cpp_native)
+    model_path: str | None = None  # path to a local .gguf
+    n_ctx: int | None = None  # context window
+    n_gpu_layers: int | None = None  # -1 = offload all
+    n_threads: int | None = None
+    seed: int | None = None
+    chat_format: str | None = None  # e.g. "llama-3", "chatml", "mistral-instruct"
+    verbose: bool = False
+
+    # Extra sampling params (forwarded when the adapter supports them)
+    top_p: float | None = None
+    top_k: int | None = None
+    min_p: float | None = None
+    repeat_penalty: float | None = None
+    stop: list[str] | None = None
 
 
 class LoopConfig(_Lax):

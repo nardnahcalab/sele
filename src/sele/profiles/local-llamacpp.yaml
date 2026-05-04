@@ -1,0 +1,45 @@
+name: local-llamacpp
+description: |
+  In-process llama.cpp via llama-cpp-python. Loads a local .gguf directly,
+  no server required. Tool calling works with chat formats that support
+  it (llama-3, qwen, functionary-v2, chatml-function-calling).
+
+  This bundled profile is a TEMPLATE — copy it to
+  ``~/.config/sele/profiles/local-llamacpp.yaml`` (or
+  ``./.sele/profiles/local-llamacpp.yaml``) and set ``model.model_path``
+  to the absolute path of your .gguf. User profiles override the bundled
+  one with the same name.
+
+  Requires the optional dep:
+    pip install "sele[llama_cpp]"
+
+model:
+  adapter: llama_cpp_native
+  model: llama-3.1-8b-instruct
+  model_path: /path/to/your/model.gguf  # EDIT ME
+  n_ctx: 8192
+  n_gpu_layers: -1   # offload all layers; set 0 for CPU-only
+  chat_format: llama-3
+  temperature: 0.2
+  max_tokens: 1024
+  verbose: false
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: host_direct
+  cwd: .
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
