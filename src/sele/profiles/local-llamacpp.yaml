@@ -38,7 +38,7 @@ sandbox:
 
 approval: confirm_destructive
 
-tools: [shell, fs_read, fs_write]
+tools: [shell, fs_read, fs_write, python_exec, http]
 
 tracer:
   kind: jsonl

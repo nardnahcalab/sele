@@ -46,6 +46,8 @@ sele = "sele.cli:app"
 shell = "sele.tools.shell:shell"
 fs_read = "sele.tools.fs:fs_read"
 fs_write = "sele.tools.fs:fs_write"
+python_exec = "sele.tools.python_exec:python_exec"
+http = "sele.tools.http:http"
 
 [project.entry-points."sele.adapters"]
 openai_compat = "sele.models.openai_compat:OpenAICompatAdapter"

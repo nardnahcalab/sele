@@ -6,7 +6,7 @@
 
 ## Status
 
-`v0.1` — early scaffold. Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
+`v0.2` — adds `llama_cpp_native` adapter for offline GGUF models, `bubblewrap` sandbox for Linux isolation with egress control, `summarize` memory for long-running tasks, and `python_exec`/`http` tools. Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
 
 ## Install
 
@@ -74,7 +74,7 @@ Builder ──► LoopContext { ModelAdapter · ToolProtocol · AgentLoop ·
 | Memory          | `full_history`, `summarize` | `sliding_window`, `retrieval`             |
 | Sandbox         | `host_direct`, `bubblewrap` | `docker`, `firejail`, `gvisor`            |
 | Approval        | `confirm_destructive`     | `allowlist`, `policy_lm`                    |
-| Tools           | `shell`, `fs_read`, `fs_write` | `http`, `python_exec`, `git`           |
+| Tools           | `shell`, `fs_read`, `fs_write`, `python_exec`, `http` | `git`           |
 | Tracer          | `jsonl`, `console`, `null` | `otel`                                     |
 
 ## Writing a profile
@@ -191,6 +191,18 @@ can bypass it. For hard guarantees use `mode: none`.
 | `all` | shares host network namespace | n/a (no policy) |
 | `hosts` | shares network + CONNECT proxy with hostname allowlist | Yes (proxy env, raw sockets) |
 
+## Tools
+
+The bundled profiles include five tools:
+
+- **`shell`** — Run bash commands in the sandbox working directory. Returns stdout, stderr, and exit code.
+- **`fs_read`** — Read a UTF-8 text file inside the sandbox cwd.
+- **`fs_write`** — Create or overwrite a UTF-8 text file inside the sandbox cwd.
+- **`python_exec`** — Execute Python code in the sandbox. Uses the sandbox's Python interpreter. Supports both single-line and multi-line code (use triple quotes for multi-line). Returns stdout, stderr, and exit code.
+- **`http`** — Make HTTP requests from the sandbox. Supports GET, POST, PUT, DELETE, etc. with custom headers and body. Returns status code, response body, and selected headers. Respects sandbox egress control (e.g., bubblewrap proxy).
+
+All tools except `fs_read` are marked as destructive and require confirmation under the default `confirm_destructive` approval policy when running interactively.
+
 ## Long-running tasks with `summarize` memory
 
 The default `full_history` memory keeps every message verbatim, which
@@ -267,7 +279,7 @@ will be rendered into the system prompt.
 
 ## Roadmap
 
-- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory; `python_exec` and `http` tools.
+- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory.
 - v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License

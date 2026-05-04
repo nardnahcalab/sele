@@ -43,7 +43,8 @@ sandbox:
 
 approval: confirm_destructive
 
-tools: [shell, fs_read, fs_write]
+tools: [shell, fs_read, fs_write, python_exec]
+# Add 'http' to tools above if you set egress.mode to 'all' or 'hosts'
 
 tracer:
   kind: jsonl
