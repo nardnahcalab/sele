@@ -9,7 +9,7 @@ from sele.types import Step
 
 
 class ConsoleTracer:
-    def __init__(self, **_: object) -> None:
+    def __init__(self, config: object = None, **_: object) -> None:  # noqa: ARG002
         self.console = Console(stderr=True)
         self.run_id = "console"
 

@@ -61,6 +61,7 @@ plan_execute = "sele.loops.plan_execute:PlanExecuteLoop"
 
 [project.entry-points."sele.memory"]
 full_history = "sele.memory.full_history:FullHistoryMemory"
+summarize = "sele.memory.summarize:SummarizeMemory"
 
 [project.entry-points."sele.sandbox"]
 host_direct = "sele.sandbox.host_direct:HostDirectSandbox"

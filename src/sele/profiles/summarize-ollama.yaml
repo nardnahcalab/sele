@@ -1,0 +1,41 @@
+name: summarize-ollama
+description: |
+  Local Ollama with summarize memory — keeps the running task viable even
+  when the conversation grows past the model's context window. Older
+  turns get folded into a single summary message; recent turns stay
+  verbatim. Tool-call / tool-result pairs are never split.
+
+  Defaults are conservative for small-context models (~8K tokens). For
+  larger context windows, raise ``trigger_chars`` and ``recent_chars``
+  proportionally (assume ~4 chars/token).
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 40
+
+memory:
+  kind: summarize
+  trigger_chars: 12000   # ~3000 tokens; compact when total exceeds this
+  recent_chars: 6000     # ~1500 tokens; size of verbatim window after compaction
+  summary_role: system   # or "assistant" if your model dislikes multiple system msgs
+
+sandbox:
+  kind: host_direct
+  cwd: .
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs

@@ -7,7 +7,7 @@ should never reach into the registry themselves.
 
 from __future__ import annotations
 
-from sele.config import Profile, coerce_tracer_config
+from sele.config import Profile, coerce_memory_config, coerce_tracer_config
 from sele.interfaces import AgentLoop
 from sele.loops.base import LoopContext
 from sele.registry import REGISTRY
@@ -31,8 +31,9 @@ def build_loop(profile: Profile) -> AgentLoop:
     protocol_cls = REGISTRY.get("protocols", profile.protocol)
     protocol = _instantiate(protocol_cls)
 
-    memory_cls = REGISTRY.get("memory", profile.memory)
-    memory = _instantiate(memory_cls)
+    memory_cfg = coerce_memory_config(profile.memory)
+    memory_cls = REGISTRY.get("memory", memory_cfg.kind)
+    memory = _instantiate(memory_cls, memory_cfg, adapter=adapter)
 
     sandbox_cls = REGISTRY.get("sandbox", profile.sandbox.kind)
     sandbox = _instantiate(sandbox_cls, profile.sandbox)

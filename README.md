@@ -71,7 +71,7 @@ Builder ──► LoopContext { ModelAdapter · ToolProtocol · AgentLoop ·
 | ModelAdapter    | `openai_compat`, `llama_cpp_native` | `transformers_native`            |
 | ToolProtocol    | `native_tools`/`react_text` | `json_grammar`, `xml_tags`                |
 | AgentLoop       | `tool_loop`/`plan_execute` | `reflexion`, `tree_search`                 |
-| Memory          | `full_history`            | `sliding_window`, `summarize`, `retrieval`  |
+| Memory          | `full_history`, `summarize` | `sliding_window`, `retrieval`             |
 | Sandbox         | `host_direct`, `bubblewrap` | `docker`, `firejail`, `gvisor`            |
 | Approval        | `confirm_destructive`     | `allowlist`, `policy_lm`                    |
 | Tools           | `shell`, `fs_read`, `fs_write` | `http`, `python_exec`, `git`           |
@@ -191,6 +191,50 @@ can bypass it. For hard guarantees use `mode: none`.
 | `all` | shares host network namespace | n/a (no policy) |
 | `hosts` | shares network + CONNECT proxy with hostname allowlist | Yes (proxy env, raw sockets) |
 
+## Long-running tasks with `summarize` memory
+
+The default `full_history` memory keeps every message verbatim, which
+is fine for short tasks but blows the context window on anything longer.
+The `summarize` memory backend keeps the original system prompt and a
+sliding window of recent turns verbatim; when total content exceeds
+`trigger_chars` it folds everything older into a single model-generated
+summary message.
+
+```yaml
+memory:
+  kind: summarize
+  trigger_chars: 12000   # ~3000 tokens; compact when total exceeds this
+  recent_chars: 6000     # ~1500 tokens; size of verbatim window after compaction
+  summary_role: system   # or "assistant" if your model dislikes multi-system
+  prompt: |              # optional; overrides the built-in summarizer prompt
+    Summarize the conversation so far in under {budget} characters...
+```
+
+The builder wires the agent's own `ModelAdapter` into the memory, so
+summarization uses the same backend (and same credentials) as the agent
+loop. There's no separate model to configure.
+
+Try it with the bundled profile:
+
+```bash
+sele run "explore this directory and write a one-page architecture overview" \
+  -p summarize-ollama
+```
+
+**Things to know:**
+
+- **Char-based budget, not token-based.** A `chars/token ≈ 4` proxy is
+  fine for budgeting; for tight context windows configure conservatively.
+  A pluggable token counter can replace this without API changes later.
+- **Tool-call / tool-result pairs are never split.** The boundary
+  walks back if it would otherwise land between an `assistant`-with-tool-calls
+  and the matching `tool` results. Without this, OpenAI-shape backends
+  reject the request.
+- **Each compaction is one model call.** Set `trigger_chars` so this
+  doesn't fire constantly. Defaults to 24000 chars (~6K tokens).
+- **Summarizer errors don't crash the loop** — they're caught, embedded
+  in the summary placeholder, and visible in the trace.
+
 ## Running fully offline with `llama_cpp_native`
 
 `llama_cpp_native` runs a GGUF model directly in the `sele` process — no
@@ -223,7 +267,7 @@ will be rendered into the system prompt.
 
 ## Roadmap
 
-- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `summarize` and `retrieval` memory; `python_exec` and `http` tools.
+- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory; `python_exec` and `http` tools.
 - v0.3 — `reflexion` loop; eval runner against agent benchmarks; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License

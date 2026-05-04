@@ -76,6 +76,19 @@ class LoopConfig(_Lax):
     max_steps: int = 25
 
 
+class MemoryConfig(_Lax):
+    """Settings for any Memory implementation. Unknown fields pass through
+    via ``extra='allow'`` so individual implementations can read what they need."""
+
+    kind: str = "full_history"
+
+    # SummarizeMemory fields (ignored by full_history)
+    trigger_chars: int = 24000  # compact when total content exceeds this
+    recent_chars: int = 12000  # target size of the recent verbatim window
+    prompt: str | None = None  # custom summarizer prompt; default in the impl
+    summary_role: str = "system"  # role for the inserted summary message
+
+
 class EgressConfig(_Lax):
     """Network egress policy for sandboxes that support it.
 
@@ -124,7 +137,7 @@ class Profile(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     protocol: str = "native_tools"
     loop: LoopConfig = Field(default_factory=LoopConfig)
-    memory: str = "full_history"
+    memory: MemoryConfig | str = Field(default_factory=MemoryConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     approval: str = "confirm_destructive"
     tools: list[str] = Field(default_factory=lambda: ["shell", "fs_read", "fs_write"])
@@ -199,3 +212,11 @@ def coerce_tracer_config(value: TracerConfig | str | dict[str, Any]) -> TracerCo
     if isinstance(value, str):
         return TracerConfig(kind=value)
     return TracerConfig(**value)
+
+
+def coerce_memory_config(value: MemoryConfig | str | dict[str, Any]) -> MemoryConfig:
+    if isinstance(value, MemoryConfig):
+        return value
+    if isinstance(value, str):
+        return MemoryConfig(kind=value)
+    return MemoryConfig(**value)

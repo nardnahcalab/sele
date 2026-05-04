@@ -8,7 +8,7 @@ from sele.types import Step
 class NullTracer:
     run_id = "null"
 
-    def __init__(self, **_: object) -> None:
+    def __init__(self, config: object = None, **_: object) -> None:  # noqa: ARG002
         pass
 
     def start(self, profile_name: str, task: str) -> None:  # noqa: ARG002
