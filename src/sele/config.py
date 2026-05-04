@@ -1,0 +1,156 @@
+"""Profile loading and schema.
+
+A profile is a YAML file that selects one implementation for each pluggable
+surface, plus per-component config. It looks like::
+
+    name: local-ollama
+    description: Llama 3.1 via Ollama, ReAct text protocol.
+    model:
+      adapter: openai_compat
+      base_url: http://localhost:11434/v1
+      model: llama3.1:8b
+      api_key: ollama
+      temperature: 0.2
+    protocol: react_text
+    loop:
+      kind: tool_loop
+      max_steps: 25
+    memory: full_history
+    sandbox:
+      kind: host_direct
+      cwd: .
+    approval: confirm_destructive
+    tools: [shell, fs_read, fs_write]
+    tracer: jsonl
+    system_prompt: |
+      You are sele, ...
+"""
+
+from __future__ import annotations
+
+from importlib import resources
+from pathlib import Path
+from typing import Any
+
+import yaml
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class _Lax(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class ModelConfig(_Lax):
+    adapter: str = "openai_compat"
+    base_url: str | None = None
+    model: str = ""
+    api_key: str | None = None
+    api_key_env: str | None = None
+    temperature: float | None = None
+    max_tokens: int | None = None
+    timeout: float = 120.0
+    extra_headers: dict[str, str] = Field(default_factory=dict)
+
+
+class LoopConfig(_Lax):
+    kind: str = "tool_loop"
+    max_steps: int = 25
+
+
+class SandboxConfig(_Lax):
+    kind: str = "host_direct"
+    cwd: str = "."
+    env_allowlist: list[str] = Field(
+        default_factory=lambda: ["PATH", "HOME", "LANG", "LC_ALL", "USER", "SHELL", "TERM"]
+    )
+    timeout: float = 60.0
+
+
+class TracerConfig(_Lax):
+    kind: str = "jsonl"
+    dir: str = ".sele/runs"
+
+
+class Profile(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    name: str
+    description: str = ""
+    model: ModelConfig = Field(default_factory=ModelConfig)
+    protocol: str = "native_tools"
+    loop: LoopConfig = Field(default_factory=LoopConfig)
+    memory: str = "full_history"
+    sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
+    approval: str = "confirm_destructive"
+    tools: list[str] = Field(default_factory=lambda: ["shell", "fs_read", "fs_write"])
+    tracer: TracerConfig | str = Field(default_factory=TracerConfig)
+    system_prompt: str = ""
+
+
+DEFAULT_SYSTEM_PROMPT = (
+    "You are sele, a careful command-line agent.\n"
+    "- Think step-by-step. Prefer small, verifiable actions.\n"
+    "- Use tools when they help; otherwise answer directly.\n"
+    "- Stop and report when the task is done."
+)
+
+
+def _bundled_profile_path(name: str) -> Path | None:
+    try:
+        root = resources.files("sele").joinpath("profiles")
+    except (ModuleNotFoundError, FileNotFoundError):
+        return None
+    candidate = root.joinpath(f"{name}.yaml")
+    try:
+        if candidate.is_file():
+            return Path(str(candidate))
+    except (FileNotFoundError, OSError):
+        pass
+    return None
+
+
+def _user_profile_path(name: str) -> Path | None:
+    for base in (Path.cwd() / ".sele" / "profiles", Path.home() / ".config" / "sele" / "profiles"):
+        candidate = base / f"{name}.yaml"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def resolve_profile_path(name_or_path: str) -> Path:
+    """Resolve a profile name or filesystem path to an absolute Path."""
+
+    p = Path(name_or_path)
+    if p.suffix in {".yaml", ".yml"} and p.exists():
+        return p.resolve()
+    user = _user_profile_path(name_or_path)
+    if user is not None:
+        return user.resolve()
+    bundled = _bundled_profile_path(name_or_path)
+    if bundled is not None:
+        return bundled.resolve()
+    raise FileNotFoundError(f"profile not found: {name_or_path!r}")
+
+
+def load_profile(name_or_path: str) -> Profile:
+    path = resolve_profile_path(name_or_path)
+    raw = yaml.safe_load(path.read_text()) or {}
+    raw.setdefault("name", path.stem)
+    raw.setdefault("system_prompt", DEFAULT_SYSTEM_PROMPT)
+    return Profile.model_validate(raw)
+
+
+def list_bundled_profiles() -> list[str]:
+    try:
+        root = resources.files("sele").joinpath("profiles")
+        return sorted(p.stem for p in root.iterdir() if p.suffix in {".yaml", ".yml"})  # type: ignore[union-attr]
+    except (ModuleNotFoundError, FileNotFoundError, AttributeError):
+        return []
+
+
+def coerce_tracer_config(value: TracerConfig | str | dict[str, Any]) -> TracerConfig:
+    if isinstance(value, TracerConfig):
+        return value
+    if isinstance(value, str):
+        return TracerConfig(kind=value)
+    return TracerConfig(**value)

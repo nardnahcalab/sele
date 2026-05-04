@@ -1,0 +1,32 @@
+name: vllm
+description: |
+  Generic vLLM / OpenAI-compatible server. Set SELE_BASE_URL and
+  SELE_MODEL via environment, or edit this file. Uses native tool calling
+  if the served model supports it; switch ``protocol: react_text`` if not.
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:8000/v1
+  model: Qwen/Qwen2.5-7B-Instruct
+  api_key: EMPTY
+  temperature: 0.2
+
+protocol: native_tools
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: host_direct
+  cwd: .
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs
