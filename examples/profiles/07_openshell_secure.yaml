@@ -1,0 +1,47 @@
+name: openshell-secure
+description: |
+  Secure configuration with OpenShell sandbox for Docker-based isolation.
+  OpenShell provides policy-based network control and full container isolation.
+
+  This profile:
+  - Uses OpenShell sandbox for stronger isolation than bubblewrap
+  - Disables http tool by default (add after configuring network policies)
+  - Uses confirm_destructive approval policy
+  - Sets reasonable timeouts
+
+  Requires:
+    - Docker Desktop (or Docker daemon) running
+    - pip install openshell>=0.1.0
+    - See https://github.com/NVIDIA/OpenShell for setup
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: openshell
+  cwd: .
+  timeout: 60.0
+  # Optional: specify custom openshell path
+  # openshell_path: /usr/local/bin/openshell
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write, python_exec]
+# Add http tool only after configuring OpenShell network policies:
+# tools: [shell, fs_read, fs_write, python_exec, http]
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs

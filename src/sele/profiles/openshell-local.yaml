@@ -1,0 +1,47 @@
+name: openshell-local
+description: |
+  Local Ollama + OpenShell sandbox. Each shell tool call runs inside
+  an OpenShell container with policy enforcement for filesystem, network,
+  process, and inference. OpenShell uses Docker/K3s under the hood for
+  container isolation.
+
+  Network access is controlled via OpenShell policies. By default, minimal
+  outbound access is allowed. Use `openshell policy set` to apply network
+  policies for specific hosts and endpoints.
+
+  Requires:
+    - Docker Desktop (or Docker daemon) running
+    - pip install openshell
+    - See https://github.com/NVIDIA/OpenShell for details
+
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+
+protocol: react_text
+
+loop:
+  kind: tool_loop
+  max_steps: 25
+
+memory: full_history
+
+sandbox:
+  kind: openshell
+  cwd: .
+  timeout: 60.0
+  # Optional: specify custom openshell path
+  # openshell_path: /usr/local/bin/openshell
+
+approval: confirm_destructive
+
+tools: [shell, fs_read, fs_write, python_exec]
+# Note: http tool not included by default; add if you configure
+# OpenShell network policies to allow HTTP requests
+
+tracer:
+  kind: jsonl
+  dir: .sele/runs

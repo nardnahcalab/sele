@@ -38,6 +38,9 @@ dev = [
 llama_cpp = [
     "llama-cpp-python>=0.2.90",
 ]
+openshell = [
+    "openshell>=0.1.0",
+]
 
 [project.scripts]
 sele = "sele.cli:app"
@@ -68,6 +71,7 @@ summarize = "sele.memory.summarize:SummarizeMemory"
 [project.entry-points."sele.sandbox"]
 host_direct = "sele.sandbox.host_direct:HostDirectSandbox"
 bubblewrap = "sele.sandbox.bubblewrap:BubblewrapSandbox"
+openshell = "sele.sandbox.openshell:OpenShellSandbox"
 
 [project.entry-points."sele.approval"]
 auto = "sele.approval.policies:AutoApproval"

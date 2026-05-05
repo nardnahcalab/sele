@@ -123,6 +123,9 @@ class SandboxConfig(_Lax):
     tmpfs: list[str] | None = None  # None -> use sandbox's defaults
     egress: EgressConfig = Field(default_factory=EgressConfig)
 
+    # OpenShell-specific (ignored by host_direct and bubblewrap)
+    openshell_path: str | None = None  # Path to openshell binary
+
 
 class TracerConfig(_Lax):
     kind: str = "jsonl"

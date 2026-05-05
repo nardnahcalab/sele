@@ -9,6 +9,7 @@
 **v0.2** — Complete. Adds:
 - `llama_cpp_native` adapter for offline GGUF models
 - `bubblewrap` sandbox for Linux isolation with egress control
+- `openshell` sandbox for Docker-based isolation with policy-based network control
 - `summarize` memory for long-running tasks
 - `python_exec` and `http` tools
 - `sele eval` for benchmarking
@@ -213,6 +214,37 @@ can bypass it. For hard guarantees use `mode: none`.
 | `none` | `--unshare-net` — fully blocked | No |
 | `all` | shares host network namespace | n/a (no policy) |
 | `hosts` | shares network + CONNECT proxy with hostname allowlist | Yes (proxy env, raw sockets) |
+
+## Sandboxing with OpenShell
+
+OpenShell is NVIDIA's Docker-based sandbox system with policy-based network control. It provides stronger isolation than bubblewrap by running in a full Docker container, while still being lightweight and easy to use.
+
+Install OpenShell on the host:
+
+```bash
+# Install Docker first if you don't have it
+curl -fsSL https://get.docker.com | sh
+
+# Install OpenShell
+pip install openshell>=0.1.0
+```
+
+Then use the bundled profile:
+
+```bash
+sele run "look at this directory and write a one-line summary to NOTES.md" \
+  -p openshell-local
+```
+
+OpenShell creates a Docker container with your working directory bind-mounted. The container persists for the duration of the session and is cleaned up when the sandbox is destroyed. Network access is controlled by OpenShell policies (see OpenShell documentation for details).
+
+For a custom openshell binary path, set `openshell_path` in your profile:
+
+```yaml
+sandbox:
+  kind: openshell
+  openshell_path: /path/to/openshell
+```
 
 ## Tools
 

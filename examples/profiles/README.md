@@ -11,6 +11,7 @@ The following profiles are bundled with sele:
 - `openrouter` - OpenRouter API with plan-execute loop
 - `vllm` - Generic vLLM/OpenAI-compatible server
 - `bubblewrap-local` - Ollama with bubblewrap sandbox
+- `openshell-local` - Ollama with OpenShell Docker-based sandbox
 - `summarize-ollama` - Ollama with summarize memory
 
 ## Custom Profiles
@@ -46,3 +47,7 @@ Profile with custom tool selection and approval policy.
 ### 06_production.yaml
 
 Production-ready configuration with timeouts and resource limits.
+
+### 07_openshell_secure.yaml
+
+Secure configuration with OpenShell Docker-based sandbox for stronger isolation.

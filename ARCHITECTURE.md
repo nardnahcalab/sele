@@ -128,6 +128,7 @@ Execution boundary for tool calls. Provides isolation and resource limits.
 |----------------|-------------|--------|
 | `host_direct` | Direct host execution with cwd boundary only | ✅ v0.1 |
 | `bubblewrap` | Linux namespaces (PID/IPC/UTS/mount) with egress control | ✅ v0.2 |
+| `openshell` | Docker-based sandbox with policy-based network control | ✅ v0.2 |
 | `docker` | Docker container isolation | Planned |
 | `firejail` | Firejail sandbox (Linux) | Planned |
 | `gvisor` | gVisor application sandbox | Planned |
@@ -249,7 +250,8 @@ Tool.__call__(sandbox, arguments)
     │
     ├─ shell: sandbox.run_shell(command)
     │   ├─ HostDirectSandbox: subprocess.run(bash -lc command)
-    │   └─ BubblewrapSandbox: subprocess.run(bwrap ... bash -lc command)
+    │   ├─ BubblewrapSandbox: subprocess.run(bwrap ... bash -lc command)
+    │   └─ OpenShellSandbox: subprocess.run(openshell exec ... bash -lc command)
     │
     ├─ fs_read: sandbox.read_file(path)
     │   └─ Direct file read (in-process, respects cwd boundary)
@@ -261,7 +263,7 @@ Tool.__call__(sandbox, arguments)
     │   └─ Uses shell, respects sandbox isolation
     │
     └─ http: sandbox.run_shell(curl ...)
-        └─ Uses shell, respects egress control (proxy in bubblewrap)
+        └─ Uses shell, respects egress control (proxy in bubblewrap, policy in openshell)
 ```
 
 ## Plugin Development
@@ -434,6 +436,19 @@ Memory budgets use character counts, not token counts. This provides:
 - Best-effort egress control (proxy can be bypassed)
 - File ops run in-process (trusted control plane)
 
+### OpenShell Sandbox
+
+`openshell` provides Docker-based isolation with policy-based network control:
+- Full Docker container isolation
+- Policy-based network egress control
+- Working directory bind-mounted for persistence
+- Container lifecycle managed by openshell CLI
+
+**Limitations:**
+- Requires Docker and OpenShell installation
+- Heavier than bubblewrap (Docker overhead)
+- File ops run in-process (trusted control plane)
+
 ### Approval Policies
 
 - `auto`: No confirmation (dangerous in production)
@@ -460,6 +475,7 @@ Memory budgets use character counts, not token counts. This provides:
 
 - `host_direct`: Minimal overhead (direct subprocess)
 - `bubblewrap`: Millisecond startup per shell call
+- `openshell`: Second-level startup (Docker container creation)
 - Trade-off: isolation vs. performance
 
 ## Extensibility Points
