@@ -1,0 +1,32 @@
+name: reflexion-ollama
+description: Llama 3.1 via Ollama with reflexion skill for self-improvement
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+protocol: react_text
+loop:
+  kind: tool_loop
+  max_steps: 50
+  skills:
+    enabled: true
+    skills: [reflexion]
+    skill_settings:
+      reflexion:
+        reflection_threshold: 3
+        max_reflections: 3
+memory: full_history
+sandbox:
+  kind: host_direct
+  cwd: .
+approval: confirm_destructive
+tools: [shell, fs_read, fs_write]
+tracer: jsonl
+system_prompt: |
+  You are sele, a careful command-line agent with the ability to reflect on your progress.
+  - Think step-by-step. Prefer small, verifiable actions.
+  - Use tools when they help; otherwise answer directly.
+  - When you get stuck, take a moment to reflect on what you've tried and what to try next.
+  - Stop and report when the task is done.

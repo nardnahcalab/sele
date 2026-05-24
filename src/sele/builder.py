@@ -50,6 +50,30 @@ def build_loop(profile: Profile) -> AgentLoop:
     tracer_cls = REGISTRY.get("tracer", tracer_cfg.kind)
     tracer = _instantiate(tracer_cls, tracer_cfg)
 
+    # Build skills if enabled
+    skills = None
+    skills_config = None
+    if profile.loop.skills.enabled and profile.loop.skills.skills:
+        skills = []
+        for skill_name in profile.loop.skills.skills:
+            skill_obj = REGISTRY.get("skills", skill_name)
+            skills.append(_instantiate(skill_obj))
+        
+        # Prepare skills configuration
+        skills_config = {
+            "breadth": profile.loop.skills.breadth,
+            "depth": profile.loop.skills.depth,
+            "context_window": profile.loop.skills.context_window,
+            "context_compression": profile.loop.skills.context_compression,
+            "loop_strategy": profile.loop.skills.loop_strategy,
+            "skill_settings": profile.loop.skills.skill_settings,
+        }
+
+    # Determine loop kind (can be overridden by skills)
+    loop_kind = profile.loop.kind
+    if skills_config and skills_config.get("loop_strategy"):
+        loop_kind = skills_config["loop_strategy"]
+
     ctx = LoopContext(
         adapter=adapter,
         protocol=protocol,
@@ -60,7 +84,15 @@ def build_loop(profile: Profile) -> AgentLoop:
         tracer=tracer,
         system_prompt=profile.system_prompt,
         max_steps=profile.loop.max_steps,
+        skills=skills,
+        skills_config=skills_config,
     )
 
-    loop_cls = REGISTRY.get("loops", profile.loop.kind)
-    return loop_cls(ctx)
+    loop_cls = REGISTRY.get("loops", loop_kind)
+    loop = loop_cls(ctx)
+    
+    # Initialize skills after loop creation
+    if hasattr(loop, "_initialize_skills"):
+        loop._initialize_skills()
+    
+    return loop

@@ -1,0 +1,33 @@
+name: context-managed-ollama
+description: Llama 3.1 via Ollama with context management for long-running tasks
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+protocol: react_text
+loop:
+  kind: tool_loop
+  max_steps: 100
+  skills:
+    enabled: true
+    skills: [context_manager]
+    context_window: 4096
+    skill_settings:
+      context_manager:
+        max_context_chars: 4096
+        compression_ratio: 0.4
+memory: full_history
+sandbox:
+  kind: host_direct
+  cwd: .
+approval: confirm_destructive
+tools: [shell, fs_read, fs_write]
+tracer: jsonl
+system_prompt: |
+  You are sele, a careful command-line agent optimized for long-running tasks.
+  - Think step-by-step. Prefer small, verifiable actions.
+  - Use tools when they help; otherwise answer directly.
+  - Your context window is limited; focus on the most recent and relevant information.
+  - Stop and report when the task is done.

@@ -34,6 +34,7 @@ _GROUPS = {
     "sandbox": "sele.sandbox",
     "approval": "sele.approval",
     "tracer": "sele.tracer",
+    "skills": "sele.skills",
 }
 
 
@@ -109,3 +110,4 @@ memory = _decorator("memory")
 sandbox = _decorator("sandbox")
 approval = _decorator("approval")
 tracer = _decorator("tracer")
+skill = _decorator("skills")

@@ -20,6 +20,9 @@ from sele.config import (
     resolve_profile_path,
 )
 from sele.eval import EvalRunner
+from sele.registry import REGISTRY
+# Import skills to register them
+import sele.skills  # noqa: F401
 
 app = typer.Typer(
     add_completion=False,
@@ -177,6 +180,25 @@ def profiles_show(name: str = typer.Argument(..., help="Profile name or path."))
 
     path = resolve_profile_path(name)
     console.print(Panel(path.read_text(), title=str(path), border_style="cyan"))
+
+
+# ------------------------------------------------------------------ skills
+
+
+@app.command("skills")
+def skills_list() -> None:
+    """List available skills."""
+
+    available_skills = REGISTRY.list("skills")
+    if not available_skills:
+        console.print("[yellow]No skills registered.[/yellow]")
+        return
+    
+    table = Table(title="available skills")
+    table.add_column("name", style="bold")
+    for skill_name in available_skills:
+        table.add_row(skill_name)
+    console.print(table)
 
 
 # ------------------------------------------------------------------ traces

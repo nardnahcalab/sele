@@ -16,6 +16,7 @@ from sele.interfaces import (
     Memory,
     ModelAdapter,
     Sandbox,
+    Skill,
     Tool,
     ToolProtocol,
     Tracer,
@@ -41,6 +42,8 @@ class LoopContext:
     tracer: Tracer
     system_prompt: str
     max_steps: int = 25
+    skills: list[Skill] | None = None  # Optional list of skills
+    skills_config: dict[str, Any] | None = None  # Skills configuration (breadth, depth, etc.)
 
     @property
     def tool_specs(self) -> list[ToolSpec]:
@@ -57,6 +60,12 @@ class LoopBase:
         self._seeded = False
 
     # ------------------------------------------------------------------ setup
+
+    def _initialize_skills(self) -> None:
+        """Initialize all skills with the loop context."""
+        if self.ctx.skills:
+            for skill in self.ctx.skills:
+                skill.initialize(self.ctx)
 
     def _seed_system(self) -> None:
         if self._seeded:
@@ -143,6 +152,11 @@ class LoopBase:
         """Run one model turn. Returns (assistant_text, calls, results).
         If ``calls`` is empty, the loop should terminate."""
 
+        # Call before_step hooks on all skills
+        if self.ctx.skills:
+            for skill in self.ctx.skills:
+                skill.before_step(self._step_index, self.ctx.memory.view())
+
         response, step = self._call_model()
         text, calls = self.ctx.protocol.parse_response(response)
         self._record_assistant(text, calls)
@@ -151,6 +165,11 @@ class LoopBase:
         if results:
             self._record_tool_results(results)
             step.tool_results = results
+
+        # Call after_step hooks on all skills
+        if self.ctx.skills:
+            for skill in self.ctx.skills:
+                skill.after_step(self._step_index, response, results)
 
         self.ctx.tracer.step(step)
         self._step_index += 1

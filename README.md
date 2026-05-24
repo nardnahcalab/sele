@@ -16,7 +16,7 @@
 
 Works against any OpenAI-compatible server (Ollama, vLLM, llama.cpp's server, OpenRouter, LM Studio, …).
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design, [EVAL.md](./EVAL.md) for test coverage, and [examples/](./examples/) for usage examples.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design, [SKILLS.md](./SKILLS.md) for skills documentation, [EVAL.md](./EVAL.md) for test coverage, and [examples/](./examples/) for usage examples.
 
 ## Install
 
@@ -331,6 +331,68 @@ Tool calling works with chat formats that support it — `llama-3`,
 `qwen`, `functionary-v2`, `chatml-function-calling`. For models without
 tool support, switch the profile's `protocol` to `react_text` and tools
 will be rendered into the system prompt.
+
+## Skills: Advanced reasoning strategies
+
+Skills augment the agent loop with specialized reasoning strategies, context management, and control over search breadth and depth. Enable them in your profile:
+
+```yaml
+loop:
+  kind: tool_loop
+  max_steps: 50
+  skills:
+    enabled: true
+    skills: [reflexion]
+    breadth: 1
+    depth: 1
+    context_window: 8000
+    skill_settings:
+      reflexion:
+        reflection_threshold: 3
+        max_reflections: 2
+```
+
+Built-in skills:
+
+- **`reflexion`** — Self-reflection and iterative improvement. Tracks progress and injects reflection prompts when stuck.
+- **`context_manager`** — Manages context window to prevent exceeding model limits.
+
+Try the bundled profiles:
+
+```bash
+sele run "your task" -p reflexion-ollama
+sele run "long task" -p context-managed-ollama
+sele run "complex task" -p skills-combined-ollama
+```
+
+Write custom skills by subclassing `BaseSkill`:
+
+```python
+from sele import skill
+from sele.skills import BaseSkill
+
+@skill("my_skill")
+class MySkill(BaseSkill):
+    name = "my_skill"
+    
+    def initialize(self, ctx):
+        # Called once before the loop starts
+        pass
+    
+    def before_step(self, step_index, memory):
+        # Called before each model step
+        pass
+    
+    def after_step(self, step_index, response, tool_results):
+        # Called after each model step
+        pass
+    
+    def on_loop_end(self, final_text, total_steps):
+        # Called when the loop terminates
+        return final_text
+```
+
+See [SKILLS.md](./SKILLS.md) for comprehensive documentation and [examples/skills/](./examples/skills/) for more examples.
 
 ## Roadmap
 

@@ -1,0 +1,39 @@
+name: skills-combined-ollama
+description: Llama 3.1 via Ollama with combined reflexion and context management
+model:
+  adapter: openai_compat
+  base_url: http://localhost:11434/v1
+  model: llama3.1:8b
+  api_key: ollama
+  temperature: 0.2
+protocol: react_text
+loop:
+  kind: tool_loop
+  max_steps: 100
+  skills:
+    enabled: true
+    skills: [reflexion, context_manager]
+    breadth: 1
+    depth: 1
+    context_window: 6000
+    skill_settings:
+      reflexion:
+        reflection_threshold: 3
+        max_reflections: 2
+      context_manager:
+        max_context_chars: 6000
+        compression_ratio: 0.5
+memory: full_history
+sandbox:
+  kind: host_direct
+  cwd: .
+approval: confirm_destructive
+tools: [shell, fs_read, fs_write]
+tracer: jsonl
+system_prompt: |
+  You are sele, a careful command-line agent with advanced reasoning capabilities.
+  - Think step-by-step. Prefer small, verifiable actions.
+  - Use tools when they help; otherwise answer directly.
+  - Reflect on your progress when you get stuck.
+  - Be mindful of your context window and focus on relevant information.
+  - Stop and report when the task is done.

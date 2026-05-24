@@ -1,5 +1,6 @@
 """sele — a pluggable agent harness for open-source models."""
 
+from sele.interfaces import Skill
 from sele.registry import (
     adapter,
     approval,
@@ -7,6 +8,7 @@ from sele.registry import (
     memory,
     protocol,
     sandbox,
+    skill,
     tool,
     tracer,
 )
@@ -21,6 +23,8 @@ __all__ = [
     "memory",
     "protocol",
     "sandbox",
+    "skill",
     "tool",
     "tracer",
+    "Skill",
 ]
