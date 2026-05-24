@@ -396,8 +396,7 @@ See [SKILLS.md](./SKILLS.md) for comprehensive documentation and [examples/skill
 
 ## Roadmap
 
-- v0.2 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory.
-- v0.3 — `reflexion` loop; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
+- v0.3 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License
 

@@ -92,7 +92,7 @@ The outer agent strategy. Drives Memory + ModelAdapter + Tools to a terminal sta
 |----------------|-------------|--------|
 | `tool_loop` | Simple loop: model → tools → model until done | ✅ v0.1 |
 | `plan_execute` | Plan first, then execute steps | ✅ v0.1 |
-| `reflexion` | Self-reflection and correction | Planned |
+| `reflexion` | Self-reflection and correction | ✅ v0.2 |
 | `tree_search` | Tree-of-thought search | Planned |
 
 **Interface:**
@@ -514,12 +514,11 @@ Test categories:
 
 ## Future Directions
 
-### v0.2+ Planned Features
+### v0.3+ Planned Features
 
 - `transformers_native` adapter
 - `docker` sandbox (cross-platform)
 - `retrieval` memory
-- `reflexion` loop
 - Persistent multi-turn memory
 - `gvisor` sandbox
 

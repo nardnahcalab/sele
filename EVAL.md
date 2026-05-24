@@ -4,8 +4,8 @@ This document catalogs all test cases in the sele codebase, organized by module.
 
 ## Test Summary
 
-- **Total Tests**: 68
-- **Passing**: 68
+- **Total Tests**: 92
+- **Passing**: 92
 - **Skipped**: 0
 - **Coverage**: All major modules tested
 
@@ -134,6 +134,27 @@ Unit tests for tool implementations (python_exec and http).
 | `test_http_missing_url` | Handles missing URL parameter | `sele.tools.http.http` | ✅ Pass |
 | `test_http_with_headers` | Executes HTTP request with custom headers (mocked) | `sele.tools.http.http` | ✅ Pass |
 
+### test_skills.py
+
+Tests for the skills framework including reflexion and context_manager skills.
+
+| Test Case | Functionality Tested | Module | Result |
+|-----------|---------------------|--------|--------|
+| `test_skills_config_defaults` | SkillsConfig has sensible defaults | `sele.config.SkillsConfig` | ✅ Pass |
+| `test_skills_config_with_values` | SkillsConfig with custom values | `sele.config.SkillsConfig` | ✅ Pass |
+| `test_loop_config_includes_skills` | LoopConfig includes skills configuration | `sele.config.LoopConfig` | ✅ Pass |
+| `test_reflexion_skill_initialization` | ReflexionSkill initialization | `sele.skills.reflexion.ReflexionSkill` | ✅ Pass |
+| `test_reflexion_skill_with_config` | ReflexionSkill with custom configuration | `sele.skills.reflexion.ReflexionSkill` | ✅ Pass |
+| `test_context_manager_skill_initialization` | ContextManagerSkill initialization | `sele.skills.context_manager.ContextManagerSkill` | ✅ Pass |
+| `test_context_manager_skill_with_config` | ContextManagerSkill with custom configuration | `sele.skills.context_manager.ContextManagerSkill` | ✅ Pass |
+| `test_base_skill_hooks` | BaseSkill hooks can be overridden | `sele.skills.base.BaseSkill` | ✅ Pass |
+| `test_skills_registered_in_registry` | Built-in skills are registered | `sele.registry` | ✅ Pass |
+| `test_skill_retrieval_from_registry` | Retrieving skills from registry | `sele.registry` | ✅ Pass |
+| `test_skill_on_loop_end_default` | BaseSkill.on_loop_end returns text unchanged | `sele.skills.base.BaseSkill` | ✅ Pass |
+| `test_reflexion_skill_progress_tracking` | ReflexionSkill tracks progress | `sele.skills.reflexion.ReflexionSkill` | ✅ Pass |
+| `test_context_manager_skill_compression_trigger` | ContextManagerSkill detects compression need | `sele.skills.context_manager.ContextManagerSkill` | ✅ Pass |
+| `test_skills_config_with_skill_settings` | SkillsConfig with per-skill settings | `sele.config.SkillsConfig` | ✅ Pass |
+
 ## Running Tests
 
 ```bash
@@ -205,6 +226,6 @@ Most tests use `tmp_path` fixture from pytest for temporary directories. Some te
 ## Continuous Integration
 
 Tests run on every commit. Expected to pass on:
-- Linux (all 68 tests, including bubblewrap integration when bwrap is installed)
-- macOS (64 tests, bubblewrap integration skipped if bwrap not available)
-- Windows (64 tests, bubblewrap integration not applicable)
+- Linux (all 92 tests, including bubblewrap integration when bwrap is installed)
+- macOS (88 tests, bubblewrap integration skipped if bwrap not available)
+- Windows (88 tests, bubblewrap integration not applicable)
