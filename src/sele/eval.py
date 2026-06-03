@@ -84,7 +84,7 @@ class EvalRunner:
 
             try:
                 result = loop.run(task_text)
-                steps = len([e for e in loop.ctx.memory.view() if e["role"] == "assistant"])
+                steps = len([e for e in loop.ctx.memory.view() if e.role == "assistant"])
                 success = True
                 error = None
             except FutureTimeoutError:
