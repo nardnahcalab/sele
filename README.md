@@ -354,8 +354,8 @@ loop:
 
 Built-in skills:
 
-- **`reflexion`** — Self-reflection and iterative improvement. Tracks progress and injects reflection prompts when stuck.
-- **`context_manager`** — Manages context window to prevent exceeding model limits.
+- **`reflexion`** — Self-reflection and iterative improvement. Tracks progress and injects reflection prompts into memory when the agent stalls, encouraging re-planning.
+- **`context_manager`** — Manages context window size by trimming older messages when the threshold is exceeded, preserving the system prompt and avoiding tool-call/result pair splits.
 
 Try the bundled profiles:
 
@@ -376,11 +376,12 @@ class MySkill(BaseSkill):
     name = "my_skill"
     
     def initialize(self, ctx):
-        # Called once before the loop starts
-        pass
+        # Called once before the loop starts; store ctx.memory
+        # to modify the conversation in later hooks
+        self._memory = ctx.memory
     
     def before_step(self, step_index, memory):
-        # Called before each model step
+        # Called before each model step; can append to self._memory
         pass
     
     def after_step(self, step_index, response, tool_results):

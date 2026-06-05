@@ -101,6 +101,12 @@ class AgentLoop(Protocol):
     def run(self, task: str) -> str: ...
 ```
 
+`LoopBase` provides shared machinery for skill lifecycle integration:
+- `step_once()` calls `before_step` / `after_step` hooks on all registered skills
+- `_finalize(last_text)` calls `on_loop_end` on all skills before returning
+
+Both `ToolLoop` and `PlanExecuteLoop` call `_finalize()` at every exit point.
+
 ### Memory
 
 Maintains the message history shown to the model on each step.

@@ -152,7 +152,7 @@ Tests for the skills framework including reflexion and context_manager skills.
 | `test_skill_retrieval_from_registry` | Retrieving skills from registry | `sele.registry` | ✅ Pass |
 | `test_skill_on_loop_end_default` | BaseSkill.on_loop_end returns text unchanged | `sele.skills.base.BaseSkill` | ✅ Pass |
 | `test_reflexion_skill_progress_tracking` | ReflexionSkill tracks progress | `sele.skills.reflexion.ReflexionSkill` | ✅ Pass |
-| `test_context_manager_skill_compression_trigger` | ContextManagerSkill detects compression need | `sele.skills.context_manager.ContextManagerSkill` | ✅ Pass |
+| `test_context_manager_skill_compression_trigger` | ContextManagerSkill trims messages when context overflows | `sele.skills.context_manager.ContextManagerSkill` | ✅ Pass |
 | `test_skills_config_with_skill_settings` | SkillsConfig with per-skill settings | `sele.config.SkillsConfig` | ✅ Pass |
 
 ## Running Tests
