@@ -57,6 +57,7 @@ def test_reflexion_skill_with_config():
     
     # Mock LoopContext with skills config
     class MockContext:
+        memory = None
         skills_config = {
             "skill_settings": {
                 "reflexion": {

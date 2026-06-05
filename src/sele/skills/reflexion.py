@@ -24,10 +24,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sele.skills.base import BaseSkill
+from sele.types import Message
 
 if TYPE_CHECKING:
+    from sele.interfaces import Memory
     from sele.loops.base import LoopContext
-    from sele.types import Message, ModelResponse, ToolResult
+    from sele.types import ModelResponse, ToolResult
 
 
 class ReflexionSkill(BaseSkill):
@@ -42,9 +44,11 @@ class ReflexionSkill(BaseSkill):
         self.last_reflection_step = -1
         self.steps_since_progress = 0
         self.last_response_length = 0
+        self._memory: Memory | None = None
 
     def initialize(self, ctx: LoopContext) -> None:
         """Initialize reflexion skill with configuration."""
+        self._memory = ctx.memory
         if ctx.skills_config and "skill_settings" in ctx.skills_config:
             settings = ctx.skills_config["skill_settings"].get("reflexion", {})
             self.reflection_threshold = settings.get("reflection_threshold", 3)
@@ -58,17 +62,16 @@ class ReflexionSkill(BaseSkill):
             and step_index - self.last_reflection_step >= self.reflection_threshold
             and self.steps_since_progress >= self.reflection_threshold
         ):
-            # Inject reflection prompt
             reflection_prompt = (
-                "\n\n[Reflection] You've been working on this task for a while. "
+                "[Reflection] You've been working on this task for a while. "
                 "Take a moment to reflect on your progress so far:\n"
                 "1. What have you accomplished?\n"
                 "2. What challenges have you encountered?\n"
                 "3. What should you try next?\n"
                 "Then continue with your plan."
             )
-            # Note: We can't directly modify memory here, but we can log this
-            # The actual injection would happen in a more sophisticated implementation
+            if self._memory is not None:
+                self._memory.append(Message(role="user", content=reflection_prompt))
             self.reflection_count += 1
             self.last_reflection_step = step_index
 
