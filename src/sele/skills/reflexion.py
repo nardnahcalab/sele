@@ -64,7 +64,7 @@ class ReflexionSkill(BaseSkill):
             and self.steps_since_progress >= self.reflection_threshold
         ):
             # Inject reflection prompt
-            prompt = (
+            reflection_prompt = (
                 "[Reflection] You've been working on this task for a while. "
                 "Take a moment to reflect on your progress so far:\n"
                 "1. What have you accomplished?\n"
@@ -73,7 +73,7 @@ class ReflexionSkill(BaseSkill):
                 "Then continue with your plan."
             )
             if self._memory is not None:
-                self._memory.append(Message(role="user", content=prompt))
+                self._memory.append(Message(role="user", content=reflection_prompt))
             self.reflection_count += 1
             self.last_reflection_step = step_index
 

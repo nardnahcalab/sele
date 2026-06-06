@@ -51,5 +51,5 @@ class PlanExecuteLoop(LoopBase):
             text, calls, _ = self.step_once()
             last_text = text or last_text
             if not calls:
-                return last_text
-        return last_text or "(max steps reached)"
+                return self._finalize(last_text)
+        return self._finalize(last_text or "(max steps reached)")

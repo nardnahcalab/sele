@@ -67,6 +67,13 @@ class LoopBase:
             for skill in self.ctx.skills:
                 skill.initialize(self.ctx)
 
+    def _finalize(self, last_text: str) -> str:
+        """Run on_loop_end hooks on all skills and return final text."""
+        if self.ctx.skills:
+            for skill in self.ctx.skills:
+                last_text = skill.on_loop_end(last_text, self._step_index)
+        return last_text
+
     def _seed_system(self) -> None:
         if self._seeded:
             return

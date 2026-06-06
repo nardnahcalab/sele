@@ -83,9 +83,10 @@ def test_context_manager_skill_initialization():
 def test_context_manager_skill_with_config():
     """Test ContextManagerSkill with custom configuration."""
     skill = ContextManagerSkill()
-    
+
     # Mock LoopContext with skills config
     class MockContext:
+        memory = None
         skills_config = {
             "context_window": 4096,
             "skill_settings": {
@@ -95,7 +96,7 @@ def test_context_manager_skill_with_config():
                 }
             }
         }
-    
+
     skill.initialize(MockContext())  # type: ignore
     assert skill.max_context_chars == 4096
     assert skill.compression_ratio == 0.3
@@ -193,18 +194,35 @@ def test_reflexion_skill_progress_tracking():
 
 
 def test_context_manager_skill_compression_trigger():
-    """Test that ContextManagerSkill detects when compression is needed."""
+    """Test that ContextManagerSkill actually trims messages when context overflows."""
+    from sele.memory.full_history import FullHistoryMemory
+
+    mem = FullHistoryMemory()
+    # Seed memory: system + 4 user/assistant pairs
+    mem.append(Message(role="system", content="You are a helper."))
+    mem.append(Message(role="user", content="a" * 40))
+    mem.append(Message(role="assistant", content="b" * 40))
+    mem.append(Message(role="user", content="c" * 40))
+    mem.append(Message(role="assistant", content="d" * 40))
+
     skill = ContextManagerSkill()
     skill.max_context_chars = 100
-    
-    # Create memory with content exceeding threshold
-    memory = [
-        Message(role="user", content="x" * 60),
-        Message(role="assistant", content="y" * 60),
-    ]
-    
-    skill.before_step(0, memory)
+    skill.compression_ratio = 0.5
+    skill._memory = mem
+
+    skill.before_step(0, mem.view())
     assert skill.compression_triggered is True
+    assert skill.compression_count == 1
+
+    msgs = mem.view()
+    # System prompt must survive
+    assert msgs[0].role == "system"
+    assert msgs[0].content == "You are a helper."
+    # Trim notice is second
+    assert msgs[1].role == "system"
+    assert "trimmed" in msgs[1].content
+    # Total chars should be within budget now
+    assert len(msgs) < 6  # fewer than original 5 messages
 
 
 def test_skills_config_with_skill_settings():
