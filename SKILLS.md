@@ -64,7 +64,7 @@ system_prompt: |
 
 ### Reflexion
 
-The `reflexion` skill enables self-reflection and iterative improvement. It tracks progress and injects reflection prompts when the agent appears to be stuck.
+The `reflexion` skill enables self-reflection and iterative improvement. It tracks progress and injects reflection prompts directly into the agent's memory when it appears stuck.
 
 **Configuration:**
 
@@ -81,14 +81,15 @@ loop:
 
 **How it works:**
 
-1. Tracks response length as a proxy for progress
-2. Detects when progress stalls (same response length for N steps)
-3. Injects reflection prompts to encourage re-planning
-4. Limits the number of reflection cycles to prevent infinite loops
+1. Stores a reference to `ctx.memory` during `initialize()`
+2. Tracks response length as a proxy for progress
+3. Detects when progress stalls (same response length for N steps)
+4. Appends a `role="user"` reflection prompt into memory to encourage re-planning
+5. Limits the number of reflection cycles to prevent infinite loops
 
 ### Context Manager
 
-The `context_manager` skill manages the agent's context window to prevent exceeding model limits.
+The `context_manager` skill manages the agent's context window to prevent exceeding model limits by trimming older messages.
 
 **Configuration:**
 
@@ -101,15 +102,17 @@ loop:
     skill_settings:
       context_manager:
         max_context_chars: 8000
-        compression_ratio: 0.5  # Keep 50% of old messages
+        compression_ratio: 0.5  # Keep 50% of old messages after trim
 ```
 
 **How it works:**
 
-1. Monitors total context size (sum of message lengths)
-2. Detects when approaching the context limit
-3. Triggers compression when threshold is exceeded
-4. Maintains a sliding window of recent context
+1. Stores a reference to `ctx.memory` during `initialize()`
+2. Monitors total context size (sum of message character lengths)
+3. When `max_context_chars` is exceeded, trims the oldest non-system messages
+4. Preserves the system prompt and inserts a notice indicating how many messages were trimmed
+5. Avoids splitting tool-call / tool-result pairs at the trim boundary
+6. Can re-trigger on subsequent steps if context grows again
 
 ## Writing Custom Skills
 
@@ -125,15 +128,15 @@ class MySkill(BaseSkill):
     
     def initialize(self, ctx):
         """Called once before the loop starts."""
+        # Store ctx.memory to modify the conversation in later hooks
+        self._memory = ctx.memory
         print(f"Initializing {self.name}")
-        # You can inspect and modify the context here
-        # e.g., add specialized tools, update system prompt
     
     def before_step(self, step_index, memory):
         """Called before each model step."""
         print(f"Step {step_index}: {len(memory)} messages in memory")
-        # You can inspect memory and potentially modify it
-        # e.g., inject reflection prompts, compress context
+        # Can append to self._memory to inject prompts, or
+        # mutate self._memory._messages to trim old messages
     
     def after_step(self, step_index, response, tool_results):
         """Called after each model step completes."""
@@ -241,7 +244,10 @@ Skills are initialized and called in order, so you can compose them for complex 
 
 ## Accessing Skills from Loops
 
-Loops can access skills through the `LoopContext`:
+Loops can access skills through the `LoopContext`. `LoopBase` provides:
+
+- **`step_once()`** — automatically calls `before_step` and `after_step` hooks
+- **`_finalize(last_text)`** — runs `on_loop_end` on all skills and returns the final text
 
 ```python
 class MyLoop(LoopBase):
@@ -252,17 +258,11 @@ class MyLoop(LoopBase):
             text, calls, _ = self.step_once()
             last_text = text or last_text
             if not calls:
-                break
-        
-        # Call on_loop_end hooks
-        if self.ctx.skills:
-            for skill in self.ctx.skills:
-                last_text = skill.on_loop_end(last_text, self._step_index)
-        
-        return last_text
+                return self._finalize(last_text)
+        return self._finalize(last_text or "(max steps reached)")
 ```
 
-The `LoopBase` class automatically calls `before_step` and `after_step` hooks in `step_once()`.
+Both `ToolLoop` and `PlanExecuteLoop` call `_finalize()` at every return point.
 
 ## CLI Commands
 
