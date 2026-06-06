@@ -51,6 +51,8 @@ Interactive REPL:
 sele chat -p local-ollama
 ```
 
+The chat REPL maintains conversation history across turns. Use `:clear` to reset memory and start a fresh conversation.
+
 Inspect bundled profiles or the latest trace:
 
 ```bash
@@ -354,8 +356,8 @@ loop:
 
 Built-in skills:
 
-- **`reflexion`** — Self-reflection and iterative improvement. Tracks progress and injects reflection prompts into memory when the agent stalls, encouraging re-planning.
-- **`context_manager`** — Manages context window size by trimming older messages when the threshold is exceeded, preserving the system prompt and avoiding tool-call/result pair splits.
+- **`reflexion`** — Self-reflection and iterative improvement. Tracks progress and injects reflection prompts into memory when the agent stalls, encouraging re-planning. The skill stores a reference to the memory during initialization and appends user messages with reflection prompts when the stall threshold is reached.
+- **`context_manager`** — Manages context window size by trimming older messages when the threshold is exceeded, preserving the system prompt and avoiding tool-call/result pair splits. The skill stores a reference to the memory and directly mutates the internal message list to trim older messages while inserting a notice about the compression.
 
 Try the bundled profiles:
 
@@ -370,34 +372,36 @@ Write custom skills by subclassing `BaseSkill`:
 ```python
 from sele import skill
 from sele.skills import BaseSkill
+from sele.types import Message
 
 @skill("my_skill")
 class MySkill(BaseSkill):
     name = "my_skill"
-    
+
     def initialize(self, ctx):
         # Called once before the loop starts; store ctx.memory
         # to modify the conversation in later hooks
         self._memory = ctx.memory
-    
+
     def before_step(self, step_index, memory):
         # Called before each model step; can append to self._memory
-        pass
-    
+        if self._memory is not None:
+            self._memory.append(Message(role="user", content="My custom prompt"))
+
     def after_step(self, step_index, response, tool_results):
         # Called after each model step
         pass
-    
+
     def on_loop_end(self, final_text, total_steps):
-        # Called when the loop terminates
-        return final_text
+        # Called when the loop terminates; can modify final output
+        return final_text + "\n\n[MySkill] Task completed."
 ```
 
 See [SKILLS.md](./SKILLS.md) for comprehensive documentation and [examples/skills/](./examples/skills/) for more examples.
 
 ## Roadmap
 
-- v0.3 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory; persistent multi-turn chat memory; optional `gvisor` sandbox for stricter isolation.
+- v0.3 — `transformers_native` adapter; `docker` sandbox (cross-platform fallback to bubblewrap); `retrieval` memory; optional `gvisor` sandbox for stricter isolation.
 
 ## License
 

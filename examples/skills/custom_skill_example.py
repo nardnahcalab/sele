@@ -2,6 +2,11 @@
 
 This example demonstrates how to create a custom skill that tracks task progress
 and provides feedback to the agent.
+
+Key patterns:
+1. Store ctx.memory in initialize() to modify conversation
+2. Use memory.append() to inject prompts during before_step()
+3. Use on_loop_end() to modify final output
 """
 
 from __future__ import annotations
@@ -10,21 +15,24 @@ from typing import TYPE_CHECKING
 
 from sele import skill
 from sele.skills import BaseSkill
+from sele.types import Message
 
 if TYPE_CHECKING:
+    from sele.interfaces import Memory
     from sele.loops.base import LoopContext
-    from sele.types import Message, ModelResponse, ToolResult
+    from sele.types import ModelResponse, ToolResult
 
 
 @skill("progress_tracker")
 class ProgressTrackerSkill(BaseSkill):
     """A skill that tracks and reports on task progress.
-    
+
     This skill:
     1. Counts the number of tool calls made
     2. Tracks the types of tools used
     3. Monitors response length over time
-    4. Reports progress at the end
+    4. Injects periodic progress prompts into memory
+    5. Reports progress at the end
     """
 
     name = "progress_tracker"
@@ -33,16 +41,30 @@ class ProgressTrackerSkill(BaseSkill):
         self.tool_call_count = 0
         self.tool_types: dict[str, int] = {}
         self.response_lengths: list[int] = []
-        self.task_description = ""
+        self._memory: Memory | None = None
+        self.progress_check_interval = 5
+        self.last_progress_step = 0
 
     def initialize(self, ctx: LoopContext) -> None:
-        """Initialize the skill."""
+        """Initialize the skill and store memory reference."""
+        self._memory = ctx.memory
         print(f"[{self.name}] Initialized")
 
     def before_step(self, step_index: int, memory: list[Message]) -> None:
-        """Called before each model step."""
-        # You could inject progress prompts here
-        pass
+        """Called before each model step.
+
+        This is where you can inject prompts into the conversation.
+        """
+        # Inject progress reminder every N steps
+        if (step_index - self.last_progress_step >= self.progress_check_interval
+            and self._memory is not None):
+            prompt = (
+                "[Progress Check] You've been working for a while. "
+                "Consider if you're making progress toward the goal. "
+                "If stuck, try a different approach."
+            )
+            self._memory.append(Message(role="user", content=prompt))
+            self.last_progress_step = step_index
 
     def after_step(
         self, step_index: int, response: ModelResponse, tool_results: list[ToolResult]
@@ -58,7 +80,7 @@ class ProgressTrackerSkill(BaseSkill):
                 self.tool_types[call.name] = self.tool_types.get(call.name, 0) + 1
 
     def on_loop_end(self, final_text: str, total_steps: int) -> str:
-        """Generate a progress report."""
+        """Generate a progress report and append to final output."""
         report = self._generate_report(total_steps)
         return final_text + "\n" + report
 

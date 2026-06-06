@@ -19,8 +19,10 @@ This directory contains examples for using the sele agent harness.
 
 - **Local development**: Use Ollama or llama.cpp for offline inference
 - **Production**: Use vLLM or OpenRouter for scalable inference
-- **Isolation**: Use bubblewrap sandbox for secure execution
-- **Long tasks**: Use summarize memory for context window management
+- **Isolation**: Use bubblewrap or openshell sandbox for secure execution
+- **Long tasks**: Use summarize memory or context_manager skill for context window management
+- **Multi-turn conversations**: Use `sele chat` for interactive sessions with persistent memory
+- **Advanced reasoning**: Use skills (reflexion, context_manager) for better task performance
 - **Benchmarking**: Use `sele eval` to measure performance
 
 ## Next Steps

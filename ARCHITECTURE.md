@@ -102,10 +102,11 @@ class AgentLoop(Protocol):
 ```
 
 `LoopBase` provides shared machinery for skill lifecycle integration:
+- `_initialize_skills()` calls `initialize()` on all registered skills before the loop starts
 - `step_once()` calls `before_step` / `after_step` hooks on all registered skills
 - `_finalize(last_text)` calls `on_loop_end` on all skills before returning
 
-Both `ToolLoop` and `PlanExecuteLoop` call `_finalize()` at every exit point.
+Both `ToolLoop` and `PlanExecuteLoop` call `_finalize()` at every exit point, ensuring skill post-processing (like reflexion summaries) executes before the final result is returned.
 
 ### Memory
 
@@ -525,7 +526,6 @@ Test categories:
 - `transformers_native` adapter
 - `docker` sandbox (cross-platform)
 - `retrieval` memory
-- Persistent multi-turn memory
 - `gvisor` sandbox
 
 ### Research Areas
