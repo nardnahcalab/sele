@@ -16,7 +16,9 @@ from sele import __version__
 from sele.builder import build_loop
 from sele.config import (
     EvalConfig,
+    Profile,
     SandboxConfig,
+    coerce_tracer_config,
     list_bundled_profiles,
     load_profile,
     resolve_profile_path,
@@ -90,15 +92,30 @@ def run(
         err_console.print(f"[dim]trace: {trace_path}[/dim]")
 
 
+def _new_tracer(profile: Profile):
+    """Build a fresh tracer from a profile (one per chat turn)."""
+    tracer_cfg = coerce_tracer_config(profile.tracer)
+    tracer_cls = REGISTRY.get("tracer", tracer_cfg.kind)
+    if isinstance(tracer_cls, type):
+        return tracer_cls(tracer_cfg)
+    return tracer_cls
+
+
 @app.command("chat")
 def chat(
     profile: str = typer.Option("local-ollama", "--profile", "-p", help="Profile name or path."),
     cwd: str | None = typer.Option(None, "--cwd", help="Override sandbox cwd."),
 ) -> None:
-    """Interactive REPL. Type a task; the agent runs to completion, then prompts again."""
+    """Interactive REPL. Type a task; the agent runs to completion, then prompts again.
+
+    Memory is persistent across turns — the agent remembers the full
+    conversation history. Each turn gets its own tracer file.
+    """
 
     prof = _override_sandbox_cwd(load_profile(profile), cwd)
+    loop = build_loop(prof)
     console.print(f"[bold]sele chat[/bold] · profile={prof.name} · ctrl-d to exit")
+    console.print("[dim]memory persists across turns[/dim]")
 
     while True:
         try:
@@ -110,10 +127,13 @@ def chat(
             continue
         if line in {":quit", ":q", ":exit"}:
             return
+        if line == ":clear":
+            loop = build_loop(prof)
+            console.print("[dim]memory cleared[/dim]")
+            continue
 
-        # Each turn gets its own loop+tracer so memory across turns is clean.
-        # (Persistent multi-turn memory will land with v0.2 memory backends.)
-        loop = build_loop(prof)
+        # Fresh tracer per turn (JsonlTracer closes its file on end).
+        loop.ctx.tracer = _new_tracer(prof)
         loop.ctx.tracer.start(prof.name, line)
         try:
             result = loop.run(line)
