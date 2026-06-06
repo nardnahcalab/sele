@@ -86,9 +86,11 @@ class OpenShellSandbox:
         return str(candidate)
 
     def _env(self) -> dict[str, str]:
+        import os
+
         allow = set(self.config.env_allowlist or [])
-        env = {k: v for k, v in self.config._env().items() if k in allow}
-        env.setdefault("PATH", self.config._env().get("PATH", "/usr/bin:/bin"))
+        env = {k: v for k, v in os.environ.items() if k in allow}
+        env.setdefault("PATH", os.environ.get("PATH", "/usr/bin:/bin"))
         return env
 
     # ------------------------------------------------------------------ ops

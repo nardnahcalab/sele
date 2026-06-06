@@ -58,7 +58,7 @@ class Registry:
         try:
             eps = md.entry_points(group=group)
         except TypeError:  # pragma: no cover - older importlib
-            eps = md.entry_points().get(group, [])  # type: ignore[attr-defined]
+            eps = md.entry_points().get(group, [])  # type: ignore[attr-defined, arg-type]
         for ep in eps:
             if ep.name in self._items[kind]:
                 continue

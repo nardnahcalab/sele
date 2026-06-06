@@ -45,7 +45,7 @@ class ContextManagerSkill(BaseSkill):
         if ctx.skills_config:
             if ctx.skills_config.get("context_window"):
                 self.max_context_chars = ctx.skills_config["context_window"]
-            
+
             settings = ctx.skills_config.get("skill_settings", {}).get("context_manager", {})
             self.max_context_chars = settings.get("max_context_chars", self.max_context_chars)
             self.compression_ratio = settings.get("compression_ratio", self.compression_ratio)
@@ -53,7 +53,7 @@ class ContextManagerSkill(BaseSkill):
     def before_step(self, step_index: int, memory: list[Message]) -> None:
         """Check context size and compress if needed."""
         total_chars = sum(len(m.content) for m in memory)
-        
+
         if total_chars > self.max_context_chars and not self.compression_triggered:
             # In a real implementation, we would compress old messages here
             # For now, we just track that compression was triggered
@@ -69,8 +69,8 @@ class ContextManagerSkill(BaseSkill):
         """Report on context management."""
         if self.compression_triggered:
             summary = (
-                f"\n\n[Context Manager] "
-                f"Context compression was triggered during execution."
+                "\n\n[Context Manager] "
+                "Context compression was triggered during execution."
             )
             return final_text + summary
         return final_text

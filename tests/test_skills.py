@@ -54,9 +54,10 @@ def test_reflexion_skill_initialization():
 def test_reflexion_skill_with_config():
     """Test ReflexionSkill with custom configuration."""
     skill = ReflexionSkill()
-    
+
     # Mock LoopContext with skills config
     class MockContext:
+        memory = None
         skills_config = {
             "skill_settings": {
                 "reflexion": {
@@ -65,7 +66,7 @@ def test_reflexion_skill_with_config():
                 }
             }
         }
-    
+
     skill.initialize(MockContext())  # type: ignore
     assert skill.reflection_threshold == 5
     assert skill.max_reflections == 3

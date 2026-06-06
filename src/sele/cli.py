@@ -10,6 +10,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+# Import skills to register them
+import sele.skills  # noqa: F401
 from sele import __version__
 from sele.builder import build_loop
 from sele.config import (
@@ -21,8 +23,6 @@ from sele.config import (
 )
 from sele.eval import EvalRunner
 from sele.registry import REGISTRY
-# Import skills to register them
-import sele.skills  # noqa: F401
 
 app = typer.Typer(
     add_completion=False,
@@ -193,7 +193,7 @@ def skills_list() -> None:
     if not available_skills:
         console.print("[yellow]No skills registered.[/yellow]")
         return
-    
+
     table = Table(title="available skills")
     table.add_column("name", style="bold")
     for skill_name in available_skills:

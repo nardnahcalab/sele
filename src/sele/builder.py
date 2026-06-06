@@ -58,7 +58,7 @@ def build_loop(profile: Profile) -> AgentLoop:
         for skill_name in profile.loop.skills.skills:
             skill_obj = REGISTRY.get("skills", skill_name)
             skills.append(_instantiate(skill_obj))
-        
+
         # Prepare skills configuration
         skills_config = {
             "breadth": profile.loop.skills.breadth,
@@ -72,7 +72,9 @@ def build_loop(profile: Profile) -> AgentLoop:
     # Determine loop kind (can be overridden by skills)
     loop_kind = profile.loop.kind
     if skills_config and skills_config.get("loop_strategy"):
-        loop_kind = skills_config["loop_strategy"]
+        loop_strategy = skills_config["loop_strategy"]
+        if isinstance(loop_strategy, str):
+            loop_kind = loop_strategy
 
     ctx = LoopContext(
         adapter=adapter,
@@ -90,9 +92,9 @@ def build_loop(profile: Profile) -> AgentLoop:
 
     loop_cls = REGISTRY.get("loops", loop_kind)
     loop = loop_cls(ctx)
-    
+
     # Initialize skills after loop creation
     if hasattr(loop, "_initialize_skills"):
         loop._initialize_skills()
-    
+
     return loop

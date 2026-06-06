@@ -48,15 +48,16 @@ class _PythonExec:
         except (TypeError, ValueError):
             timeout_f = None
 
-        # Use python -c for inline execution. Escape the code for shell.
+        # Use python3 -c for inline execution (python3 is more common on Linux).
+        # Fall back to python if python3 is not available.
         # For multi-line code, we use a heredoc approach.
         if "\n" in code:
             # Multi-line: use a heredoc
             escaped = code.replace("'", "'\\''")  # Escape single quotes for shell
-            command = f"python -c '{escaped}'"
+            command = f"python3 -c '{escaped}'"
         else:
             # Single-line: direct
-            command = f"python -c {shlex.quote(code)}"
+            command = f"python3 -c {shlex.quote(code)}"
 
         try:
             rc, stdout, stderr = sandbox.run_shell(command, timeout=timeout_f)

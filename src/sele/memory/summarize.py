@@ -33,7 +33,7 @@ Honest tradeoffs:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from sele.config import MemoryConfig
 from sele.types import Message
@@ -179,8 +179,13 @@ class SummarizeMemory:
         if not to_summarize:
             return
         summary_text = self._call_summarizer(to_summarize)
+        role: Literal["system", "user", "assistant", "tool"] = (
+            self.summary_role  # type: ignore[assignment]
+            if self.summary_role in {"system", "assistant"}  # type: ignore[comparison-overlap]
+            else "system"
+        )
         summary_msg = Message(
-            role=self.summary_role if self.summary_role in {"system", "assistant"} else "system",
+            role=role,
             content=f"[summary of earlier turns]\n{summary_text}",
         )
         self._messages = [*kept_system, summary_msg, *recent]

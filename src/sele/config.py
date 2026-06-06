@@ -73,25 +73,25 @@ class ModelConfig(_Lax):
 
 class SkillsConfig(_Lax):
     """Configuration for skills that augment the agent loop.
-    
+
     Skills can provide specialized reasoning strategies, context management,
     and control over the breadth and depth of the agent's search space.
     """
 
     enabled: bool = False  # Enable skills support
     skills: list[str] = Field(default_factory=list)  # List of skill names to load
-    
+
     # Agent loop configuration
     loop_strategy: str | None = None  # Custom loop strategy name (e.g., "reflexion", "tree_search")
-    
+
     # Context management
     context_window: int | None = None  # Max context size for skills (overrides model default)
     context_compression: bool = False  # Enable context compression for long-running tasks
-    
+
     # Search space configuration
     breadth: int = 1  # Number of parallel branches to explore (breadth of search)
     depth: int = 1  # Maximum depth of reasoning steps (depth of search)
-    
+
     # Skill-specific settings
     skill_settings: dict[str, Any] = Field(default_factory=dict)  # Per-skill configuration
 
@@ -240,7 +240,11 @@ def load_profile(name_or_path: str) -> Profile:
 def list_bundled_profiles() -> list[str]:
     try:
         root = resources.files("sele").joinpath("profiles")
-        return sorted(p.stem for p in root.iterdir() if p.suffix in {".yaml", ".yml"})  # type: ignore[union-attr]
+        return sorted(
+            p.stem  # type: ignore[attr-defined]
+            for p in root.iterdir()
+            if p.suffix in {".yaml", ".yml"}  # type: ignore[attr-defined]
+        )
     except (ModuleNotFoundError, FileNotFoundError, AttributeError):
         return []
 

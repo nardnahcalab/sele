@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,7 @@ from sele.types import Step
 class JsonlTracer:
     def __init__(self, config: TracerConfig | None = None):
         self.config = config or TracerConfig()
-        self.run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
+        self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
         self._path = Path(self.config.dir).expanduser() / f"{self.run_id}.jsonl"
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._fp = self._path.open("a", encoding="utf-8")
@@ -28,7 +28,7 @@ class JsonlTracer:
 
     def _write(self, event: dict[str, Any]) -> None:
         event["t"] = round(time.monotonic() - self._t0, 4)
-        event["ts"] = datetime.now(UTC).isoformat()
+        event["ts"] = datetime.now(timezone.utc).isoformat()
         self._fp.write(json.dumps(event, default=str) + "\n")
         self._fp.flush()
 

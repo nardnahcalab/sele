@@ -100,7 +100,7 @@ class Tracer(Protocol):
 class Skill(Protocol):
     """A skill augments the agent loop with specialized reasoning strategies,
     context management, or search space control.
-    
+
     Skills can:
     - Modify the agent loop strategy (e.g., reflexion, tree search)
     - Control context window and compression
@@ -112,7 +112,7 @@ class Skill(Protocol):
 
     def initialize(self, ctx: LoopContext) -> None:
         """Initialize the skill with the loop context.
-        
+
         Called once before the loop starts. Skills can inspect and potentially
         modify the context (e.g., add specialized tools, update system prompt).
         """
@@ -120,7 +120,7 @@ class Skill(Protocol):
 
     def before_step(self, step_index: int, memory: list[Message]) -> None:
         """Hook called before each model step.
-        
+
         Skills can inspect memory and potentially modify it (e.g., inject
         reflection prompts, compress context).
         """
@@ -130,7 +130,7 @@ class Skill(Protocol):
         self, step_index: int, response: ModelResponse, tool_results: list[ToolResult]
     ) -> None:
         """Hook called after each model step completes.
-        
+
         Skills can inspect the step outcome and potentially trigger actions
         (e.g., evaluate progress, trigger re-planning).
         """
@@ -138,7 +138,7 @@ class Skill(Protocol):
 
     def on_loop_end(self, final_text: str, total_steps: int) -> str:
         """Hook called when the loop terminates.
-        
+
         Skills can post-process the final output or trigger cleanup.
         Returns the (possibly modified) final text.
         """
@@ -149,5 +149,7 @@ class Skill(Protocol):
 class AgentLoop(Protocol):
     """The outer agent strategy. Drives Memory + ModelAdapter + Tools to a
     terminal state."""
+
+    ctx: LoopContext
 
     def run(self, task: str) -> str: ...

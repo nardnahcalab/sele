@@ -39,7 +39,7 @@ llama_cpp = [
     "llama-cpp-python>=0.2.90",
 ]
 openshell = [
-    "openshell>=0.1.0",
+    "openshell>=0.0.50",
 ]
 
 [project.scripts]
